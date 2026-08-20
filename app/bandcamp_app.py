@@ -3,6 +3,10 @@ BandCamp Uploader — single EXE / console app.
 
 No Python install required when frozen. Needs Google Chrome on the PC.
 Paste album folder paths one at a time; drafts only (never publishes).
+
+Chrome login stays under %%LOCALAPPDATA%%\\BandCamp-Uploader.
+After each quit we stop debug Chrome, clear caches/locks/temp, and remove any
+legacy local-secrets next to the EXE — login cookies are kept.
 """
 from __future__ import annotations
 
@@ -27,6 +31,13 @@ from bandcamp_upload_album import (  # noqa: E402
     run_upload,
     title_from_filename,
 )
+from chrome_debug import (  # noqa: E402
+    chrome_data_root,
+    chrome_profile_dir,
+    cleanup_after_use,
+    prepare_chrome_profile,
+    register_chrome_cleanup_on_exit,
+)
 
 LOGIN_URL = "https://bandcamp.com/login"
 
@@ -49,12 +60,6 @@ def find_chrome() -> Path:
     )
 
 
-def chrome_profile_dir() -> Path:
-    d = app_dir() / "local-secrets" / "chrome-debug-profile"
-    d.mkdir(parents=True, exist_ok=True)
-    return d
-
-
 def ensure_prices_file() -> None:
     prices = app_dir() / "prices.txt"
     if prices.is_file():
@@ -71,10 +76,11 @@ def ensure_debug_chrome() -> None:
         print("Debug Chrome already on port 9222.", flush=True)
         return
     chrome = find_chrome()
-    profile = chrome_profile_dir()
+    profile = prepare_chrome_profile()
     print("Starting debug Chrome...", flush=True)
     print(f"  {chrome}", flush=True)
     print(f"  profile: {profile}", flush=True)
+    print(f"  (login kept in {chrome_data_root()}; caches cleared when you quit)", flush=True)
     subprocess.Popen(
         [
             str(chrome),
@@ -115,7 +121,6 @@ def upload_one(folder: Path) -> None:
 
 
 def read_path() -> Path | None:
-    """None = quit. Missing folder prints error and returns None-ish retry via empty Path not used — returns special."""
     print(flush=True)
     print("Paste one album folder path (or blank / q to quit):", flush=True)
     raw = input("> ").strip().strip('"').strip("'")
@@ -129,14 +134,18 @@ def read_path() -> Path | None:
 
 
 def main() -> int:
+    roots = (app_dir(),)
+    register_chrome_cleanup_on_exit(*roots)
     print("=== BandCamp Uploader (EXE / console) ===", flush=True)
     print("Drafts only — you publish in Bandcamp yourself.", flush=True)
     print(f"App folder: {app_dir()}", flush=True)
+    print(f"Chrome profile (login kept): {chrome_profile_dir()}", flush=True)
     ensure_prices_file()
     find_chrome()
     ensure_debug_chrome()
     print(flush=True)
     print("After you are logged into Bandcamp, paste album folders one at a time.", flush=True)
+    print("On quit: debug Chrome stops; caches/temp cleared; Bandcamp login kept.", flush=True)
 
     while True:
         folder = read_path()
@@ -152,7 +161,8 @@ def main() -> int:
         except Exception as e:
             print(f"ERROR: {e}", flush=True)
 
-    print("Bye.", flush=True)
+    n = cleanup_after_use(*roots, keep_login=True)
+    print(f"Cleanup done (stopped {n} Chrome process(es); login kept). Bye.", flush=True)
     return 0
 
 
@@ -160,5 +170,6 @@ if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except KeyboardInterrupt:
-        print("\nInterrupted.", flush=True)
+        cleanup_after_use(app_dir(), keep_login=True)
+        print("\nInterrupted — cleaned up (login kept).", flush=True)
         raise SystemExit(130)

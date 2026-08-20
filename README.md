@@ -11,14 +11,17 @@ Upload local album folders to Bandcamp as **drafts**. You review and publish you
 
 ## Option A — EXE (easiest, no install)
 
-1. Unpack and open **`app/BandCamp-Uploader/`**
+1. Unpack and open **`BandCamp-uploader/app/BandCamp-Uploader/`** (ZIP already contains the `BandCamp-uploader` folder)
 2. Double-click **`BandCamp-Uploader.exe`**
 3. Log into Bandcamp in the Chrome window that opens (once per PC)
 4. Paste one album folder path at a time; press Enter after each
 5. Review drafts in Chrome — the app never publishes
 
 Requires **Google Chrome**. Optional: edit `prices.txt` beside the exe.  
-Login profile is stored under `local-secrets/chrome-debug-profile` next to the exe.
+
+Chrome login profile is stored under **`%LOCALAPPDATA%\BandCamp-Uploader\`** (not inside the app folder), so you can delete the unpacked folder anytime.  
+After each quit the app stops debug Chrome, clears caches/locks/temp, and removes leftover `local-secrets` — **Bandcamp login is kept**.  
+Full wipe including login: **`5_cleanup.bat -RemoveLogin`** (or `.\5_cleanup.ps1 -RemoveLogin`).
 
 Rebuild from source: `app/build_exe.ps1` (uses `C:/.venv` Python + PyInstaller).
 
@@ -30,9 +33,10 @@ Rebuild from source: `app/build_exe.ps1` (uses `C:/.venv` Python + PyInstaller).
 |---|---|---|
 | 0 | `0_associate_ps1.bat` | **Do this first** — bind `.ps1` to built-in Windows PowerShell and clear other handlers |
 | 1 | `1_install.bat` / `.ps1` | Elevated install: **newest** winget Python 3.x (currently 3.14) + pip deps; skips install if 3.10+ already present |
-| 2 | `2_start_chrome.bat` / `.ps1` | Debug Chrome; log in once |
+| 2 | `2_start_chrome.bat` / `.ps1` | Debug Chrome; log in once (`%LOCALAPPDATA%\BandCamp-Uploader`) |
 | 3 | `3_check_titles.bat` / `.ps1` | Optional title / cover / price preview |
 | 4 | `4_bandcamp_uploader.bat` / `.ps1` | Upload album draft(s) |
+| 5 | `5_cleanup.bat` / `.ps1` | Stop debug Chrome; clear caches; optional `-RemoveLogin` to wipe Bandcamp login too |
 
 Prefer the **`.bat`** step files for double-click. They always call:
 

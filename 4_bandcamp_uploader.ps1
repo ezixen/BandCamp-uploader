@@ -76,6 +76,14 @@ if ($failed.Count -gt 0) {
   $failed | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
 }
 
+. (Join-Path $PSScriptRoot "_chrome_session.ps1")
+Write-Host ""
+Write-Host "Review drafts in Chrome, then press Enter here to stop debug Chrome and clean temp"
+Write-Host "(Bandcamp login is kept). Or close this window to leave Chrome open for review."
+try { $null = Read-Host } catch {}
+$n = Invoke-BandCampSessionCleanup -AppRoots @($PSScriptRoot, (Join-Path $PSScriptRoot "app\BandCamp-Uploader"))
+Write-Host "Cleanup done (stopped $n Chrome process(es); login kept)."
+
 if ($succeeded.Count -eq 0 -or $failed.Count -gt 0 -or $resolved.Errors.Count -gt 0) {
   if ($succeeded.Count -eq 0) { exit 1 }
   exit 2

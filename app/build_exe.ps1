@@ -42,6 +42,7 @@ $addData = "$prices;."
   --specpath $spec `
   --add-data $addData `
   --hidden-import websocket `
+  --hidden-import chrome_debug `
   $appPy
 
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed: $LASTEXITCODE" }
@@ -67,7 +68,9 @@ Latest always (GitHub):
 
 Needs: Google Chrome installed.
 Edits: prices.txt in this folder (album= / track=)
-Profile: local-secrets\chrome-debug-profile (created on first run)
+Chrome login: %LOCALAPPDATA%\BandCamp-Uploader\ (kept between runs)
+On quit: debug Chrome stops; caches/temp cleared; login kept
+Full wipe: ..\..\5_cleanup.bat with -RemoveLogin (scripts pack)
 "@ | Set-Content (Join-Path $built "HOW_TO_RUN.txt") -Encoding UTF8
 
 # Publish into app\BandCamp-Uploader (keep existing local-secrets if Chrome has it locked)

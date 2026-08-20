@@ -10,13 +10,17 @@ Latest always (GitHub):
 
 EASIEST (no install) — EXE
 --------------------------
-1. Open folder: app\BandCamp-Uploader\
-2. Double-click BandCamp-Uploader.exe
+1. Unpack the ZIP → BandCamp-uploader\ folder appears
+2. Open app\BandCamp-Uploader\ and double-click BandCamp-Uploader.exe
 3. Log into Bandcamp in the Chrome window (once)
 4. Paste an album folder path, press Enter; repeat for more albums
 5. Review drafts in Chrome; you publish
 
 Needs Google Chrome. Edit prices.txt next to the exe if you want.
+Chrome login is stored in %LOCALAPPDATA%\BandCamp-Uploader\ (not in the app folder),
+so you can delete the unpacked folder anytime.
+After each quit: caches/locks/temp cleared; Bandcamp login kept.
+Stuck folder or wipe login: 5_cleanup.bat   (add -RemoveLogin to wipe login too)
 
 Script path (PowerShell steps)
 ------------------------------
@@ -39,6 +43,11 @@ Script path (PowerShell steps)
 
 4. Run 4_bandcamp_uploader.bat
    - Paths separated by ; also work in the script path.
+
+5. Optional — 5_cleanup.bat
+   - Default: stop debug Chrome, clear caches/locks, remove old local-secrets;
+     Bandcamp login is KEPT.
+   - Wipe login too: 5_cleanup.ps1 -RemoveLogin
 
 How filenames work
 ------------------

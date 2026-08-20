@@ -1,8 +1,11 @@
-# 2) Start debug Chrome — log into Bandcamp once (login stays in local profile)
+# 2) Start debug Chrome — log into Bandcamp once
+# Profile: %LOCALAPPDATA%\BandCamp-Uploader\chrome-debug-profile
+# (not inside the app folder — app folder stays deletable)
 #
 #   .\2_start_chrome.ps1
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "_chrome_session.ps1")
 
 $chrome = "C:\Program Files\Google\Chrome\Application\chrome.exe"
 if (-not (Test-Path $chrome)) {
@@ -12,9 +15,11 @@ if (-not (Test-Path $chrome)) {
   throw "Chrome not found. Install Google Chrome first."
 }
 
-$root = $PSScriptRoot
-$userData = Join-Path $root "local-secrets\chrome-debug-profile"
-New-Item -ItemType Directory -Force -Path $userData | Out-Null
+# Drop legacy profile next to scripts if present (temp location)
+Remove-BandCampLegacyLocalSecrets -Roots @($PSScriptRoot, (Join-Path $PSScriptRoot "app\BandCamp-Uploader"))
+
+$userData = Ensure-BandCampChromeProfileWritable
+Clear-BandCampChromeLocks
 
 try {
   $null = Invoke-WebRequest -Uri "http://127.0.0.1:9222/json/version" -UseBasicParsing -TimeoutSec 2
@@ -39,6 +44,8 @@ try {
 }
 
 Write-Host ""
-Write-Host "Log into Bandcamp if needed (password stays in this local Chrome profile only)."
-Write-Host "Optional title check:  .\3_check_titles.ps1"
-Write-Host "Upload draft:          .\4_bandcamp_uploader.ps1"
+Write-Host "Log into Bandcamp if needed (login kept under %LOCALAPPDATA%\BandCamp-Uploader)."
+Write-Host "After uploads, session cleanup keeps login but clears caches/locks."
+Write-Host "Full wipe (including login): .\5_cleanup.bat"
+Write-Host "Optional title check:  .\3_check_titles.bat"
+Write-Host "Upload draft:          .\4_bandcamp_uploader.bat"
