@@ -179,18 +179,103 @@ def prune_ephemeral_chrome_cache(profile: Path | None = None) -> None:
                     pass
 
 
+def force_remove_tree(path: Path) -> bool:
+    """Best-effort delete of a directory tree on any drive (takeown + robocopy empty mirror)."""
+    if not path.exists():
+        return True
+    path = path.resolve()
+    stop_chrome_using_profile(path if path.name == PROFILE_DIR_NAME else path / PROFILE_DIR_NAME)
+    # Also stop chrome if command line mentions this exact path
+    marker = str(path).replace("/", "\\")
+    try:
+        subprocess.run(
+            [
+                os.environ.get("SystemRoot", r"C:\Windows")
+                + r"\System32\WindowsPowerShell\v1.0\powershell.exe",
+                "-NoProfile",
+                "-Command",
+                f"""
+$ErrorActionPreference='SilentlyContinue'
+Get-CimInstance Win32_Process | Where-Object {{
+  $_.CommandLine -and $_.CommandLine -like '*{marker.replace(chr(39),'')}*'
+}} | ForEach-Object {{ Stop-Process -Id $_.ProcessId -Force }}
+""",
+            ],
+            capture_output=True,
+            timeout=60,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    time.sleep(0.8)
+    ensure_user_writable(path)
+    shutil.rmtree(path, ignore_errors=True)
+    if not path.exists():
+        return True
+    # robocopy empty-dir mirror (works when rd/Remove-Item fail)
+    empty = Path(os.environ.get("TEMP", ".")) / f"empty_del_{os.getpid()}_{int(time.time())}"
+    try:
+        empty.mkdir(parents=True, exist_ok=True)
+        subprocess.run(
+            ["robocopy", str(empty), str(path), "/MIR", "/R:2", "/W:1", "/NFL", "/NDL", "/NJH", "/NJS", "/nc", "/ns", "/np"],
+            capture_output=True,
+            check=False,
+        )
+        subprocess.run(["cmd", "/c", "rd", "/s", "/q", str(path)], capture_output=True, check=False)
+    finally:
+        shutil.rmtree(empty, ignore_errors=True)
+    if not path.exists():
+        return True
+    # Rename aside so parent can be deleted; schedule delete on reboot as last resort
+    renamed = path.with_name(path.name + ".__delete_me__")
+    try:
+        if renamed.exists():
+            shutil.rmtree(renamed, ignore_errors=True)
+        path.rename(renamed)
+        path = renamed
+    except OSError:
+        pass
+    try:
+        import ctypes
+
+        MOVEFILE_DELAY_UNTIL_REBOOT = 0x4
+        # Schedule each top-level file if still present
+        for p in [path] + (list(path.rglob("*")) if path.exists() else []):
+            if p.exists() and p.is_file():
+                ctypes.windll.kernel32.MoveFileExW(str(p), None, MOVEFILE_DELAY_UNTIL_REBOOT)
+        if path.exists():
+            ctypes.windll.kernel32.MoveFileExW(str(path), None, MOVEFILE_DELAY_UNTIL_REBOOT)
+    except Exception:
+        pass
+    shutil.rmtree(path, ignore_errors=True)
+    return not path.exists()
+
+
 def remove_legacy_app_local_secrets(*roots: Path) -> None:
-    """Old profile lived next to the EXE/scripts — remove so the app folder deletes cleanly."""
+    """Old profile lived next to the EXE/scripts — remove so the app folder deletes cleanly on any drive."""
+    names = ("local-secrets", "local-secrets.to_delete", "local-secrets.__delete_me__")
     for root in roots:
         if not root:
             continue
-        legacy = root / "local-secrets"
-        if legacy.is_dir():
-            # Force ACLs then delete
-            ensure_user_writable(legacy)
-            stop_chrome_using_profile(legacy / "chrome-debug-profile")
-            time.sleep(0.5)
-            shutil.rmtree(legacy, ignore_errors=True)
+        for name in names:
+            legacy = Path(root) / name
+            if legacy.exists():
+                force_remove_tree(legacy)
+
+
+def scrub_app_folder_side_effects(app_root: Path) -> None:
+    """On start and exit: wipe any junk Chrome left beside the EXE (any drive)."""
+    remove_legacy_app_local_secrets(app_root)
+    # Chrome sometimes drops crashpad next to cwd if misconfigured — remove known junk names
+    for name in ("Crashpad", "chrome_debug.log", "debug.log"):
+        p = Path(app_root) / name
+        if p.is_dir():
+            force_remove_tree(p)
+        elif p.is_file():
+            try:
+                p.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def prepare_chrome_profile() -> Path:
@@ -204,11 +289,11 @@ def cleanup_after_use(*app_roots: Path, keep_login: bool = True) -> int:
     End-of-session cleanup:
     - stop debug Chrome for our profile
     - clear locks + ephemeral caches
-    - remove legacy local-secrets under app folders
+    - remove legacy local-secrets under app folders (any drive)
     - keep Bandcamp login when keep_login=True
     """
     n = stop_chrome_using_profile()
-    time.sleep(0.5)
+    time.sleep(0.8)
     clear_chrome_lock_files()
     if keep_login:
         prune_ephemeral_chrome_cache()
@@ -216,10 +301,9 @@ def cleanup_after_use(*app_roots: Path, keep_login: bool = True) -> int:
     else:
         root = chrome_data_root()
         if root.is_dir():
-            ensure_user_writable(root)
-            shutil.rmtree(root, ignore_errors=True)
+            force_remove_tree(root)
     for r in app_roots:
-        remove_legacy_app_local_secrets(r)
+        scrub_app_folder_side_effects(Path(r))
     return n
 
 

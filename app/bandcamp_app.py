@@ -37,6 +37,7 @@ from chrome_debug import (  # noqa: E402
     cleanup_after_use,
     prepare_chrome_profile,
     register_chrome_cleanup_on_exit,
+    scrub_app_folder_side_effects,
 )
 
 LOGIN_URL = "https://bandcamp.com/login"
@@ -136,16 +137,20 @@ def read_path() -> Path | None:
 def main() -> int:
     roots = (app_dir(),)
     register_chrome_cleanup_on_exit(*roots)
+    # Clear any leftover local-secrets from older EXE builds (any drive the EXE sits on)
+    scrub_app_folder_side_effects(app_dir())
     print("=== BandCamp Uploader (EXE / console) ===", flush=True)
     print("Drafts only — you publish in Bandcamp yourself.", flush=True)
     print(f"App folder: {app_dir()}", flush=True)
     print(f"Chrome profile (login kept): {chrome_profile_dir()}", flush=True)
+    print("(Profile is always under LocalAppData — never beside this EXE.)", flush=True)
     ensure_prices_file()
     find_chrome()
     ensure_debug_chrome()
     print(flush=True)
     print("After you are logged into Bandcamp, paste album folders one at a time.", flush=True)
     print("On quit: debug Chrome stops; caches/temp cleared; Bandcamp login kept.", flush=True)
+    print("This app folder should stay fully deletable afterward.", flush=True)
 
     while True:
         folder = read_path()

@@ -49,6 +49,11 @@ Script path (PowerShell steps)
      Bandcamp login is KEPT.
    - Wipe login too: 5_cleanup.ps1 -RemoveLogin
 
+6. Stuck folders (C:\Temp playwright/chrome, old local-secrets)
+   - Run 6_force_remove_browser_temps.bat
+   - Uses takeown + robocopy empty-dir trick so Windows will actually delete them
+   - Keeps Bandcamp login unless you pass -AlsoWipeBandCampLogin
+
 How filenames work
 ------------------
   01. ezixen - intro.wav

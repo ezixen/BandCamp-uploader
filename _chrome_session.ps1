@@ -64,26 +64,31 @@ function Remove-BandCampLegacyLocalSecrets {
   param([string[]]$Roots)
   foreach ($r in $Roots) {
     if (-not $r) { continue }
-    $legacy = Join-Path $r "local-secrets"
-    if (-not (Test-Path -LiteralPath $legacy)) { continue }
-    Write-Host "Removing legacy: $legacy"
-    $me = $env:USERNAME
-    # Stop chrome using this path first
-    Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue | ForEach-Object {
-      if ($_.CommandLine -and ($_.CommandLine -like "*$legacy*")) {
-        Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    foreach ($name in @("local-secrets", "local-secrets.to_delete", "local-secrets.__delete_me__")) {
+      $legacy = Join-Path $r $name
+      if (-not (Test-Path -LiteralPath $legacy)) { continue }
+      Write-Host "Removing legacy: $legacy"
+      Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" -ErrorAction SilentlyContinue | ForEach-Object {
+        if ($_.CommandLine -and ($_.CommandLine -like "*$legacy*" -or $_.CommandLine -like "*local-secrets*")) {
+          Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        }
       }
-    }
-    Start-Sleep -Seconds 1
-    cmd /c "takeown /F `"$legacy`" /R /D Y" >$null 2>&1
-    cmd /c "icacls `"$legacy`" /grant `"$me`":F /T /C /Q" >$null 2>&1
-    cmd /c "icacls `"$legacy`" /grant Administrators:F /T /C /Q" >$null 2>&1
-    Get-ChildItem -LiteralPath $legacy -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object {
-      try { $_.Attributes = 'Normal' } catch {}
-    }
-    cmd /c "rd /s /q `"$legacy`"" >$null 2>&1
-    if (Test-Path -LiteralPath $legacy) {
-      Remove-Item -LiteralPath $legacy -Recurse -Force -ErrorAction SilentlyContinue
+      Start-Sleep -Seconds 1
+      $me = $env:USERNAME
+      cmd /c "takeown /F `"$legacy`" /R /D Y" >$null 2>&1
+      cmd /c "icacls `"$legacy`" /grant `"$me`":(F) /T /C /Q" >$null 2>&1
+      cmd /c "icacls `"$legacy`" /grant Administrators:(F) /T /C /Q" >$null 2>&1
+      Get-ChildItem -LiteralPath $legacy -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object {
+        try { $_.Attributes = "Normal" } catch {}
+      }
+      $empty = Join-Path $env:TEMP ("empty_del_" + [guid]::NewGuid().ToString("N"))
+      New-Item -ItemType Directory -Force -Path $empty | Out-Null
+      & robocopy $empty $legacy /MIR /R:2 /W:1 /NFL /NDL /NJH /NJS /nc /ns /np >$null 2>&1
+      cmd /c "rd /s /q `"$empty`"" >$null 2>&1
+      cmd /c "rd /s /q `"$legacy`"" >$null 2>&1
+      if (Test-Path -LiteralPath $legacy) {
+        Write-Host "  still locked - run .\6_force_remove_browser_temps.bat" -ForegroundColor Yellow
+      }
     }
   }
 }
@@ -101,7 +106,8 @@ function Invoke-BandCampSessionCleanup {
     if (Test-Path -LiteralPath $root) {
       $me = $env:USERNAME
       cmd /c "takeown /F `"$root`" /R /D Y" >$null 2>&1
-      cmd /c "icacls `"$root`" /grant `"$me`":F /T /C /Q" >$null 2>&1
+      cmd /c "icacls `"$root`" /grant `"$me`":(F) /T /C /Q" >$null 2>&1
+      cmd /c "icacls `"$root`" /grant Administrators:(F) /T /C /Q" >$null 2>&1
       Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
     }
   } else {
