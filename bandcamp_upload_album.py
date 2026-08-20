@@ -22,7 +22,16 @@ import websocket
 
 CDP = "http://127.0.0.1:9222"
 EDIT_ALBUM = "https://ezixen.bandcamp.com/edit_album"
-REPO_ROOT = Path(__file__).resolve().parent
+
+
+def app_dir() -> Path:
+    """Folder next to the running script or frozen EXE (writable: prices, chrome profile)."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parent
+
+
+REPO_ROOT = app_dir()
 PRICES_FILE = REPO_ROOT / "prices.txt"
 
 
@@ -424,8 +433,8 @@ def main():
     if not cdp_alive():
         raise SystemExit(
             "Chrome CDP not reachable at http://127.0.0.1:9222\n"
-            "Run:  .\\scripts\\start_bandcamp_chrome.ps1\n"
-            "Log into Bandcamp in that window, then retry."
+            "Start debug Chrome first (2_start_chrome.bat or BandCamp-Uploader.exe),\n"
+            "log into Bandcamp in that window, then retry."
         )
 
     run_upload(folder, album_price, track_price)

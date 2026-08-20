@@ -1,28 +1,34 @@
 Bandcamp Uploader — how to use (short)
 ======================================
 
-1. Run 1_install.ps1 (first time only)
-   - .\1_install.ps1
+EASIEST (no install) — EXE
+--------------------------
+1. Open folder: app\BandCamp-Uploader\
+2. Double-click BandCamp-Uploader.exe
+3. Log into Bandcamp in the Chrome window (once)
+4. Paste an album folder path, press Enter; repeat for more albums
+5. Review drafts in Chrome; you publish
+
+Needs Google Chrome. Edit prices.txt next to the exe if you want.
+
+Script path (PowerShell steps)
+------------------------------
+0. Run 0_associate_ps1.bat (first time — before install)
+   - Associates .ps1 with built-in Windows PowerShell:
+     %SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe
+   - Clears other .ps1 open-with choices it can.
+   - Or just use the .bat step files / the EXE above.
+
+1. Run 1_install.bat (or 1_install.ps1) — first time only
    - Allow the Administrator / UAC prompt.
+   - Installs Python (winget) and required packages.
 
-2. Run 2_start_chrome.ps1 and log in (once per PC / profile)
-   - .\2_start_chrome.ps1
-   - Log into Bandcamp in that window (password stays local only).
+2. Run 2_start_chrome.bat (or .ps1) and log in (once per PC / profile)
 
-3. Optional — check titles
-   - .\3_check_titles.ps1
-   - One album, or several paths separated by ; 
-     Example:
-     d:\music\album1; d:\music\album2
-   - Bad paths are reported in red; valid ones are still checked.
+3. Optional — 3_check_titles.bat
 
-4. Run the uploader
-   - .\4_bandcamp_uploader.ps1
-   - Same: one path, or multiple with ;
-     .\4_bandcamp_uploader.ps1 "d:\music\a; d:\music\b"
-   - Each album is uploaded one after another as a draft.
-   - Errors / bad paths / failures are printed; summary at the end.
-   - Review drafts in Chrome; you publish. Script never publishes.
+4. Run 4_bandcamp_uploader.bat
+   - Paths separated by ; also work in the script path.
 
 How filenames work
 ------------------

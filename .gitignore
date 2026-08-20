@@ -4,3 +4,6 @@ artifacts/
 __pycache__/
 *.pyc
 .env
+app/_pyi_work/
+app/_pyi_spec/
+*.spec

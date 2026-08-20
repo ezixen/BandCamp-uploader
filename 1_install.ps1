@@ -25,8 +25,7 @@ if (-not (Test-IsAdmin)) {
     "-File", "`"$PSCommandPath`""
   )
   if ($DryRun) { $argList += "-DryRun" }
-  $exe = "pwsh"
-  if (-not (Get-Command pwsh -ErrorAction SilentlyContinue)) { $exe = "powershell.exe" }
+  $exe = Join-Path $env:SystemRoot "System32\WindowsPowerShell\v1.0\powershell.exe"
   $proc = Start-Process -FilePath $exe -Verb RunAs -ArgumentList $argList -PassThru -Wait
   exit $proc.ExitCode
 }

@@ -1,64 +1,64 @@
 # Bandcamp Uploader
 
-**[Download ZIP](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-uploader.zip)** — latest release (unpack, then start at `1_install.ps1`)
+**[Download ZIP](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-uploader.zip)** — scripts + EXE  
+**[Download EXE pack](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip)** — no Python install
 
 ---
 
-Upload one or more local album folders to Bandcamp as **drafts**. You review and publish yourself.
+Upload local album folders to Bandcamp as **drafts**. You review and publish yourself.
 
-| Step | Script | Purpose |
+## Option A — EXE (easiest, no install)
+
+1. Unpack and open **`app/BandCamp-Uploader/`**
+2. Double-click **`BandCamp-Uploader.exe`**
+3. Log into Bandcamp in the Chrome window that opens (once per PC)
+4. Paste one album folder path at a time; press Enter after each
+5. Review drafts in Chrome — the app never publishes
+
+Requires **Google Chrome**. Optional: edit `prices.txt` beside the exe.  
+Login profile is stored under `local-secrets/chrome-debug-profile` next to the exe.
+
+Rebuild from source: `app/build_exe.ps1` (uses `C:/.venv` Python + PyInstaller).
+
+---
+
+## Option B — PowerShell scripts
+
+| Step | File | Purpose |
 |---|---|---|
-| 1 | `1_install.ps1` | Elevated install: winget Python + pip deps |
-| 2 | `2_start_chrome.ps1` | Debug Chrome; log in once (local profile) |
-| 3 | `3_check_titles.ps1` | Optional title / cover / price preview |
-| 4 | `4_bandcamp_uploader.ps1` | Upload album draft(s) (no publish) |
+| 0 | `0_associate_ps1.bat` | **Do this first** — bind `.ps1` to built-in Windows PowerShell and clear other handlers |
+| 1 | `1_install.bat` / `.ps1` | Elevated install: winget Python + pip deps |
+| 2 | `2_start_chrome.bat` / `.ps1` | Debug Chrome; log in once |
+| 3 | `3_check_titles.bat` / `.ps1` | Optional title / cover / price preview |
+| 4 | `4_bandcamp_uploader.bat` / `.ps1` | Upload album draft(s) |
 
-Helpers: `_common.ps1`, `bandcamp_upload_album.py`, `prices.txt`, `requirements.txt`  
+Prefer the **`.bat`** step files for double-click. They always call:
+
+`%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`
+
+Helpers: `_run_ps1.bat`, `_common.ps1`, `bandcamp_upload_album.py`, `prices.txt`, `requirements.txt`  
 Short guide: [`how2use.txt`](how2use.txt)
 
----
+### Step 0 — Windows PowerShell for `.ps1`
 
-## Multiple albums in one run
+1. Double-click **`0_associate_ps1.bat`**
+2. It **only** uses the default Windows PowerShell path (no pwsh hunt, no questions)
+3. It clears prior BandCamp / Explorer “open with” entries for `.ps1` that it can remove
+4. Then use **`1_install.bat`** … or the raw `.ps1` files
 
-Paste **several full folder paths** separated by **`;`** (recommended).  
-A **`,`** also works when it sits between two drive paths (`D:\...`).
-
-```powershell
-.\4_bandcamp_uploader.ps1 "d:\music\album1; d:\music\album2; d:\music\album3"
-```
-
-Or omit the argument and paste when prompted.
-
-The script processes albums **one after another**. For each path it reports:
-
-- **BAD PATH** — missing or not a folder (skipped)
-- **UPLOAD FAILED** — exception or non-zero exit for that album
-- **OK** — draft finished for that album
-
-A summary at the end lists successes and every error. Exit code is non-zero if anything failed or was invalid.
-
-Same multi-path rules apply to `.\3_check_titles.ps1`.
+On some Windows 11 PCs Explorer may still show a picker once; the `.bat` twins and the EXE avoid that entirely.
 
 ---
 
-## First-time setup
+## Multiple albums (script path)
+
+Separate full folder paths with **`;`**:
 
 ```powershell
-.\1_install.ps1
-.\2_start_chrome.ps1
+.\4_bandcamp_uploader.ps1 "d:\music\album1; d:\music\album2"
 ```
 
-Log into Bandcamp in the debug Chrome window (cookies stay in `local-secrets\chrome-debug-profile`).
-
----
-
-## Every upload
-
-```powershell
-.\2_start_chrome.ps1
-.\3_check_titles.ps1 "d:\path\a; d:\path\b"     # optional
-.\4_bandcamp_uploader.ps1 "d:\path\a; d:\path\b"
-```
+The EXE asks for one path per line instead.
 
 ---
 
