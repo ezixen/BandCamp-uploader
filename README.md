@@ -80,7 +80,7 @@ The EXE asks for one path per line instead.
 01. ezixen - intro.wav
 ```
 
-Number → order · Artist stripped · Title kept · `_` → `?`
+Number → order · Artist stripped · Title kept (including trailing `...`) · `_` → `?`
 
 ---
 

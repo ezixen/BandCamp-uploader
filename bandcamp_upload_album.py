@@ -64,7 +64,8 @@ def title_from_filename(name: str) -> str:
     else:
         title = re.sub(r"(?i)\bezixen\b", "", stem)
     title = title.replace("_", "?")
-    return title.strip(" -.,")
+    # Keep trailing "..." / punctuation that belongs to the title (do NOT strip ".")
+    return title.strip(" -")
 
 
 def album_title_from_folder(folder: Path) -> str:
@@ -76,7 +77,8 @@ def album_title_from_folder(folder: Path) -> str:
             stem = right
     else:
         stem = re.sub(r"(?i)\bezixen\b", "", stem)
-    return re.sub(r"\s{2,}", " ", stem).strip(" -_.,")
+    # Keep "..." in album names; only trim spaces / dashes / underscores
+    return re.sub(r"\s{2,}", " ", stem).strip(" -_")
 
 
 def numbered_wavs(folder: Path) -> list[Path]:
@@ -287,7 +289,41 @@ def ensure_new_album_page(cdp: Cdp):
         )
 
 
-def run_upload(folder: Path, album_price: str, track_price: str):
+def album_exists_on_bandcamp(cdp: Cdp, album_title: str) -> dict:
+    """Best-effort: look for album title on the public music index before creating a new draft."""
+    want = album_title.strip()
+    cdp.call("Page.enable")
+    cdp.call("Page.navigate", {"url": "https://ezixen.bandcamp.com/music"})
+    time.sleep(2.5)
+    js = f"""
+(() => {{
+  const want = {json.dumps(want)}.trim().toLowerCase();
+  if (!want) return {{ exists: false, matches: [], url: location.href }};
+  const links = Array.from(document.querySelectorAll('a'));
+  const matches = [];
+  for (const a of links) {{
+    const t = (a.innerText || a.textContent || a.getAttribute('title') || '').trim();
+    const href = a.href || '';
+    if (!t) continue;
+    const tl = t.toLowerCase();
+    if (tl === want || tl.includes(want)) {{
+      if (/\\/album\\//.test(href) || tl === want) matches.push(t.slice(0, 120));
+    }}
+  }}
+  const body = (document.body && document.body.innerText || '').toLowerCase();
+  if (!matches.length && body.includes(want)) matches.push({json.dumps(want)});
+  return {{ exists: matches.length > 0, matches: [...new Set(matches)].slice(0, 10), url: location.href }};
+}})()
+"""
+    try:
+        raw = cdp.eval(js)
+        val = raw.get("value") if isinstance(raw, dict) else raw
+    except Exception as e:
+        return {"exists": False, "matches": [], "url": "", "error": str(e)}
+    return val if isinstance(val, dict) else {"exists": False, "matches": [], "url": ""}
+
+
+def run_upload(folder: Path, album_price: str, track_price: str, *, force: bool = False):
     wavs = numbered_wavs(folder)
     if not wavs:
         raise SystemExit("No numbered .wav files found (names must start with a digit)")
@@ -306,6 +342,20 @@ def run_upload(folder: Path, album_price: str, track_price: str):
     cdp.call("Page.enable")
     cdp.call("DOM.enable")
     cdp.call("Runtime.enable")
+
+    print(f"Checking Bandcamp music page for existing album: {album_title!r}", flush=True)
+    check = album_exists_on_bandcamp(cdp, album_title)
+    if check.get("exists") and not force:
+        print("WARNING: Album appears to ALREADY EXIST on Bandcamp — will NOT overwrite.", flush=True)
+        print(f"  Checked via: {check.get('url')}", flush=True)
+        for m in check.get("matches") or []:
+            print(f"  match: {m}", flush=True)
+        print("  Re-run with --force only if you intentionally want a new draft anyway.", flush=True)
+        cdp.close()
+        raise SystemExit(3)
+    if check.get("exists") and force:
+        print("WARNING: Album may already exist, but --force was set. Continuing…", flush=True)
+
     ensure_new_album_page(cdp)
 
     print("Set album title/price...", flush=True)
@@ -411,6 +461,11 @@ def main():
         action="store_true",
         help="Only list derived album title / cover / track titles; do not touch the browser",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Proceed even if album title seems to already exist on Bandcamp",
+    )
     args = parser.parse_args()
     folder = args.album_folder
     if not folder.is_dir():
@@ -437,7 +492,7 @@ def main():
             "log into Bandcamp in that window, then retry."
         )
 
-    run_upload(folder, album_price, track_price)
+    run_upload(folder, album_price, track_price, force=args.force)
 
 
 if __name__ == "__main__":

@@ -9,3 +9,9 @@ app/_pyi_spec/
 app/_build_out/
 local-only/
 *.spec
+
+app/BandCamp-Uploader/
+app/_build_out/
+app/_pyi_work/
+app/_pyi_spec/
+

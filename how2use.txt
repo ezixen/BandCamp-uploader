@@ -48,6 +48,7 @@ How filenames work
   01. ezixen - intro.wav
   number, artist, " - ", title, .wav
   Underscores in titles become ?
+  Trailing "..." in titles is kept (e.g. yes, and...)
 
 Cover: largest .jpg / .jpeg in the folder.
 Prices: edit prices.txt (album= / track=).
