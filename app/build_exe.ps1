@@ -68,9 +68,8 @@ Latest always (GitHub):
 
 Needs: Google Chrome installed.
 Edits: prices.txt in this folder (album= / track=)
-Chrome login: %LOCALAPPDATA%\BandCamp-Uploader\ (kept between runs)
-On quit: debug Chrome stops; caches/temp cleared; login kept
-Full wipe: ..\..\5_cleanup.bat with -RemoveLogin (scripts pack)
+Chrome login: %LOCALAPPDATA%\BandCamp-Uploader\ (kept between runs; never beside this EXE)
+On quit: debug Chrome stops; caches/temp cleared; this folder stays deletable
 "@ | Set-Content (Join-Path $built "HOW_TO_RUN.txt") -Encoding UTF8
 
 # Publish into app\BandCamp-Uploader (keep existing local-secrets if Chrome has it locked)

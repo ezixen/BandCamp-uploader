@@ -45,7 +45,5 @@ try {
 
 Write-Host ""
 Write-Host "Log into Bandcamp if needed (login kept under %LOCALAPPDATA%\BandCamp-Uploader)."
-Write-Host "After uploads, session cleanup keeps login but clears caches/locks."
-Write-Host "Full wipe (including login): .\5_cleanup.bat"
 Write-Host "Optional title check:  .\3_check_titles.bat"
 Write-Host "Upload draft:          .\4_bandcamp_uploader.bat"

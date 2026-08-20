@@ -19,10 +19,8 @@ Upload local album folders to Bandcamp as **drafts**. You review and publish you
 
 Requires **Google Chrome**. Optional: edit `prices.txt` beside the exe.  
 
-Chrome login profile is stored under **`%LOCALAPPDATA%\BandCamp-Uploader\`** (not inside the app folder), so you can delete the unpacked folder anytime.  
-After each quit the app stops debug Chrome, clears caches/locks/temp, and removes leftover `local-secrets` — **Bandcamp login is kept**.  
-Full wipe including login: **`5_cleanup.bat`** with `-RemoveLogin`, or **`6_force_remove_browser_temps.bat -AlsoWipeBandCampLogin`**.  
-Stuck `C:\Temp` Playwright/Chrome folders: run **`6_force_remove_browser_temps.bat`**.
+Chrome login profile is stored under **`%LOCALAPPDATA%\BandCamp-Uploader\`** (not inside the app folder), so you can delete the unpacked folder anytime — including when the EXE lives on `D:\` or another drive.  
+After each quit the app stops debug Chrome, clears caches/locks/temp beside the app if any, and **keeps Bandcamp login** in LocalAppData.
 
 Rebuild from source: `app/build_exe.ps1` (uses `C:/.venv` Python + PyInstaller).
 
@@ -37,8 +35,6 @@ Rebuild from source: `app/build_exe.ps1` (uses `C:/.venv` Python + PyInstaller).
 | 2 | `2_start_chrome.bat` / `.ps1` | Debug Chrome; log in once (`%LOCALAPPDATA%\BandCamp-Uploader`) |
 | 3 | `3_check_titles.bat` / `.ps1` | Optional title / cover / price preview |
 | 4 | `4_bandcamp_uploader.bat` / `.ps1` | Upload album draft(s) |
-| 5 | `5_cleanup.bat` / `.ps1` | Stop debug Chrome; clear caches; optional `-RemoveLogin` to wipe Bandcamp login too |
-| 6 | `6_force_remove_browser_temps.bat` | Force-delete stuck Chrome/Playwright temp folders (`C:\Temp\…`, old `local-secrets`) |
 
 Prefer the **`.bat`** step files for double-click. They always call:
 

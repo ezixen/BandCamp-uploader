@@ -18,9 +18,8 @@ EASIEST (no install) — EXE
 
 Needs Google Chrome. Edit prices.txt next to the exe if you want.
 Chrome login is stored in %LOCALAPPDATA%\BandCamp-Uploader\ (not in the app folder),
-so you can delete the unpacked folder anytime.
-After each quit: caches/locks/temp cleared; Bandcamp login kept.
-Stuck folder or wipe login: 5_cleanup.bat   (add -RemoveLogin to wipe login too)
+so you can delete the unpacked folder anytime (any drive).
+After each quit: caches/temp cleared; Bandcamp login kept.
 
 Script path (PowerShell steps)
 ------------------------------
@@ -43,16 +42,6 @@ Script path (PowerShell steps)
 
 4. Run 4_bandcamp_uploader.bat
    - Paths separated by ; also work in the script path.
-
-5. Optional — 5_cleanup.bat
-   - Default: stop debug Chrome, clear caches/locks, remove old local-secrets;
-     Bandcamp login is KEPT.
-   - Wipe login too: 5_cleanup.ps1 -RemoveLogin
-
-6. Stuck folders (C:\Temp playwright/chrome, old local-secrets)
-   - Run 6_force_remove_browser_temps.bat
-   - Uses takeown + robocopy empty-dir trick so Windows will actually delete them
-   - Keeps Bandcamp login unless you pass -AlsoWipeBandCampLogin
 
 How filenames work
 ------------------
