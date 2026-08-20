@@ -58,6 +58,12 @@ Copy-Item $prices (Join-Path $dist "prices.txt") -Force
 @"
 BandCamp Uploader (EXE)
 =======================
+
+Latest always (GitHub):
+  https://github.com/ezixen/BandCamp-uploader
+  https://github.com/ezixen/BandCamp-uploader/releases/latest
+  EXE pack: https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip
+
 1. Double-click BandCamp-Uploader.exe
 2. Log into Bandcamp in the Chrome window that opens (once)
 3. Paste an album folder path, Enter — repeat for more albums

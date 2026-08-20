@@ -1,6 +1,12 @@
 Bandcamp Uploader — how to use (short)
 ======================================
 
+Latest always (GitHub):
+  https://github.com/ezixen/BandCamp-uploader
+  https://github.com/ezixen/BandCamp-uploader/releases/latest
+  ZIP:  https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-uploader.zip
+  EXE:  https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip
+
 EASIEST (no install) — EXE
 --------------------------
 1. Open folder: app\BandCamp-Uploader\

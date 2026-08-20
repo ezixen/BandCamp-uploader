@@ -1,7 +1,7 @@
 # Bandcamp Uploader
 
-**[Download ZIP](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-uploader.zip)** — scripts + EXE  
-**[Download EXE pack](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip)** — no Python install
+**GitHub (latest always):** https://github.com/ezixen/BandCamp-uploader  
+**[Latest release](https://github.com/ezixen/BandCamp-uploader/releases/latest)** · **[ZIP (scripts + EXE)](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-uploader.zip)** · **[EXE only](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip)**
 
 ---
 
@@ -93,4 +93,4 @@ track=0.99
 
 No publish · no passwords in repo · respect Bandcamp terms  
 
-https://github.com/ezixen/BandCamp-uploader
+Latest: https://github.com/ezixen/BandCamp-uploader
