@@ -98,3 +98,16 @@ track=0.99
 No publish · no passwords in repo · respect Bandcamp terms  
 
 Latest: https://github.com/ezixen/BandCamp-uploader
+
+---
+
+## If stuck Chrome / Temp folders ever happen
+
+v1.5.1+ should not leave undeletable junk beside the EXE. If you still cannot delete automation leftovers (e.g. `C:\Temp\playwright_chromiumdev_profile-*`, `chrome-canary*`, old `local-secrets`), **this is the solution:**
+
+1. Read [`docs/DEV_REMOVE_STUCK_BROWSER_PROFILES.md`](docs/DEV_REMOVE_STUCK_BROWSER_PROFILES.md)
+2. Boot into **Safe Mode (Minimal)** via `msconfig`
+3. Run [`docs/SAFE_MODE_DELETE_STUCK_CHROME.bat`](docs/SAFE_MODE_DELETE_STUCK_CHROME.bat) as **Administrator**
+4. Turn Safe boot **off**, reboot normally
+
+That bat clears matching stuck **subfolders** under `C:\Temp` / `D:\Temp` (it does not wipe all of Temp).

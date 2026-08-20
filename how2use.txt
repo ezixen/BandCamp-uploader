@@ -53,3 +53,16 @@ Cover: largest .jpg / .jpeg in the folder.
 Prices: edit prices.txt (album= / track=).
 
 More detail: README.md
+
+If stuck Chrome / Temp folders ever happen
+-----------------------------------------
+  v1.5.1+ should not leave undeletable junk beside the EXE.
+  If C:\Temp (or D:\Temp) still has stuck playwright_* / chrome-canary*
+  / chrome-debug-profile* / old local-secrets folders you cannot delete:
+
+  1) docs\DEV_REMOVE_STUCK_BROWSER_PROFILES.md
+  2) Safe Mode (Minimal) via msconfig
+  3) Run docs\SAFE_MODE_DELETE_STUCK_CHROME.bat as Administrator
+  4) Turn Safe boot OFF, reboot normally
+
+  That is the solution for this class of leftover.
