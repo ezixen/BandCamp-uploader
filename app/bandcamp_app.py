@@ -37,6 +37,8 @@ from chrome_debug import (  # noqa: E402
     cleanup_after_use,
     prepare_chrome_profile,
     register_chrome_cleanup_on_exit,
+    remember_debug_port_listeners,
+    remember_started_chrome,
     scrub_app_folder_side_effects,
 )
 
@@ -82,7 +84,7 @@ def ensure_debug_chrome() -> None:
     print(f"  {chrome}", flush=True)
     print(f"  profile: {profile}", flush=True)
     print(f"  (login kept in {chrome_data_root()}; caches cleared when you quit)", flush=True)
-    subprocess.Popen(
+    proc = subprocess.Popen(
         [
             str(chrome),
             "--remote-debugging-port=9222",
@@ -93,9 +95,12 @@ def ensure_debug_chrome() -> None:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+    remember_started_chrome(proc.pid, port=9222)
     for _ in range(20):
         time.sleep(0.5)
         if cdp_alive():
+            # Chrome often exits the launcher PID; pin the real listener for quit cleanup.
+            remember_debug_port_listeners(9222)
             print("OK — CDP is up. Log into Bandcamp in that Chrome window if needed.", flush=True)
             return
     raise SystemExit("Chrome started but CDP on 9222 did not become ready.")

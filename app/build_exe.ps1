@@ -18,6 +18,12 @@ Write-Host "Build Python: $py"
 & $py -c "import sys; print(sys.version)"
 & $py -m pip install -q "pyinstaller>=6.0" "websocket-client>=1.6.0"
 
+# Prefer this repo on PYTHONPATH so we never freeze a stale chrome_debug from another clone.
+# Also keep the publish folder OFF the path (it may contain an old extracted chrome_debug.py).
+$env:PYTHONPATH = $root
+$env:PYTHONDONTWRITEBYTECODE = "1"
+& $py -c "import chrome_debug, inspect; print('chrome_debug:', inspect.getfile(chrome_debug)); assert hasattr(chrome_debug, 'remember_started_chrome'), dir(chrome_debug)"
+
 $appPy = Join-Path $PSScriptRoot "bandcamp_app.py"
 $prices = Join-Path $root "prices.txt"
 $outRoot = Join-Path $PSScriptRoot "_build_out"
@@ -72,13 +78,27 @@ Chrome login: %LOCALAPPDATA%\BandCamp-Uploader\ (kept between runs; never beside
 On quit: debug Chrome stops; caches/temp cleared; this folder stays deletable
 "@ | Set-Content (Join-Path $built "HOW_TO_RUN.txt") -Encoding UTF8
 
-# Publish into app\BandCamp-Uploader (keep existing local-secrets if Chrome has it locked)
+# Publish into app\BandCamp-Uploader (never copy local-secrets — profile is under LocalAppData)
 New-Item -ItemType Directory -Force -Path $final | Out-Null
 & robocopy $built $final /E /XD local-secrets /NFL /NDL /NJH /NJS /nc /ns /np /R:2 /W:1 | Out-Null
 Copy-Item (Join-Path $built "BandCamp-Uploader.exe") (Join-Path $final "BandCamp-Uploader.exe") -Force
 Copy-Item (Join-Path $built "prices.txt") (Join-Path $final "prices.txt") -Force
 Copy-Item (Join-Path $built "HOW_TO_RUN.txt") (Join-Path $final "HOW_TO_RUN.txt") -Force
 
+# Scrub any leftover local-secrets beside the published EXE (old builds / locked Chrome)
+& $py -c @"
+import sys
+from pathlib import Path
+sys.path.insert(0, r'$root')
+from chrome_debug import scrub_app_folder_side_effects, stop_chrome_using_profile
+stop_chrome_using_profile()
+scrub_app_folder_side_effects(Path(r'$final'))
+print('scrubbed', r'$final')
+"@
+
 Write-Host ""
 Write-Host "OK built: $(Join-Path $final 'BandCamp-Uploader.exe')"
 Get-ChildItem $final | Select-Object Name, Length | Format-Table -AutoSize
+if (Test-Path (Join-Path $final "local-secrets")) {
+  Write-Host "WARNING: local-secrets still present under publish folder" -ForegroundColor Yellow
+}

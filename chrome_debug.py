@@ -18,6 +18,11 @@ from pathlib import Path
 
 PROFILE_ROOT_NAME = "BandCamp-Uploader"
 PROFILE_DIR_NAME = "chrome-debug-profile"
+DEFAULT_DEBUG_PORT = 9222
+
+# PIDs / ports of debug Chrome we started this process (CommandLine is often blank on Windows).
+_started_chrome_pids: set[int] = set()
+_started_debug_ports: set[int] = set()
 
 # Names/paths to delete after a session (ephemeral). Login/session data is kept.
 _EPHEMERAL_DIR_NAMES = {
@@ -82,9 +87,114 @@ def ensure_user_writable(path: Path) -> Path:
     return path
 
 
+def remember_started_chrome(pid: int | None, port: int = DEFAULT_DEBUG_PORT) -> None:
+    """Record a Chrome process we launched so cleanup can stop it without CommandLine."""
+    if pid and pid > 0:
+        _started_chrome_pids.add(int(pid))
+    if port and port > 0:
+        _started_debug_ports.add(int(port))
+
+
+def remember_debug_port_listeners(port: int = DEFAULT_DEBUG_PORT) -> None:
+    """After CDP is up, record the real browser PID(s) listening on the debug port."""
+    remember_started_chrome(None, port=port)
+    for pid in _pids_listening_on_port(port):
+        remember_started_chrome(pid, port=port)
+
+
+def _powershell() -> str:
+    return (
+        os.environ.get("SystemRoot", r"C:\Windows")
+        + r"\System32\WindowsPowerShell\v1.0\powershell.exe"
+    )
+
+
+def _pids_listening_on_port(port: int) -> list[int]:
+    """Return PIDs with a TCP LISTENING socket on 127.0.0.1:port (netstat)."""
+    try:
+        r = subprocess.run(
+            ["netstat", "-ano", "-p", "tcp"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return []
+    needle = f"127.0.0.1:{port}"
+    found: set[int] = set()
+    for line in (r.stdout or "").splitlines():
+        if "LISTENING" not in line.upper():
+            continue
+        parts = line.split()
+        if len(parts) < 5:
+            continue
+        if parts[1] != needle and not parts[1].endswith(f":{port}"):
+            # Prefer localhost; still allow 0.0.0.0:port / [::1]:port
+            if f":{port}" not in parts[1]:
+                continue
+            if not (
+                parts[1].startswith("127.0.0.1:")
+                or parts[1].startswith("0.0.0.0:")
+                or parts[1].startswith("[::1]:")
+                or parts[1].startswith("[::]:")
+            ):
+                continue
+        try:
+            found.add(int(parts[-1]))
+        except ValueError:
+            continue
+    return sorted(found)
+
+
+def _debug_ports_for_profile(profile: Path) -> set[int]:
+    ports: set[int] = set()
+    port_file = profile / "DevToolsActivePort"
+    if port_file.is_file():
+        try:
+            first = port_file.read_text(encoding="utf-8", errors="ignore").splitlines()[0].strip()
+            if first.isdigit():
+                ports.add(int(first))
+        except OSError:
+            pass
+    return ports
+
+
+def _taskkill_tree(pid: int) -> bool:
+    try:
+        r = subprocess.run(
+            ["taskkill", "/PID", str(pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        err = (r.stderr or "") + (r.stdout or "")
+        return r.returncode == 0 or "not found" in err.lower()
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
 def stop_chrome_using_profile(profile: Path | None = None) -> int:
-    """Stop chrome.exe processes whose command line references our profile."""
+    """
+    Stop debug Chrome for our BandCamp profile.
+
+    Windows often returns empty Win32 CommandLine for chrome.exe, so we also:
+    - kill process trees we started this session (remember_started_chrome)
+    - kill listeners on debug ports we started or that DevToolsActivePort lists
+    """
+    global _started_chrome_pids, _started_debug_ports
     profile = profile or chrome_profile_dir()
+    stopped = 0
+    ports_to_clear = set(_started_debug_ports) | _debug_ports_for_profile(profile)
+
+    # 1) Processes we launched (reliable even when CommandLine is blank)
+    for pid in list(_started_chrome_pids):
+        if _taskkill_tree(pid):
+            stopped += 1
+    _started_chrome_pids.clear()
+
+    # 2) CommandLine match when the OS exposes it
     markers = [
         str(profile).replace("/", "\\"),
         f"{PROFILE_ROOT_NAME}\\{PROFILE_DIR_NAME}",
@@ -98,7 +208,7 @@ $ErrorActionPreference = 'SilentlyContinue'
 $n = 0
 Get-CimInstance Win32_Process -Filter "Name='chrome.exe'" | ForEach-Object {{
   if ($_.CommandLine -and ({likes})) {{
-    Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+    taskkill /PID $_.ProcessId /T /F 2>$null | Out-Null
     $n++
   }}
 }}
@@ -107,8 +217,7 @@ Write-Output $n
     try:
         r = subprocess.run(
             [
-                os.environ.get("SystemRoot", r"C:\Windows")
-                + r"\System32\WindowsPowerShell\v1.0\powershell.exe",
+                _powershell(),
                 "-NoProfile",
                 "-ExecutionPolicy",
                 "Bypass",
@@ -120,13 +229,22 @@ Write-Output $n
             timeout=60,
             check=False,
         )
-        time.sleep(0.8)
         try:
-            return int((r.stdout or "0").strip().splitlines()[-1])
+            stopped += int((r.stdout or "0").strip().splitlines()[-1])
         except (ValueError, IndexError):
-            return 0
+            pass
     except (OSError, subprocess.TimeoutExpired):
-        return 0
+        pass
+
+    # 3) Port-based kill only for ports we started or our profile advertises
+    for port in ports_to_clear:
+        for pid in _pids_listening_on_port(port):
+            if _taskkill_tree(pid):
+                stopped += 1
+    _started_debug_ports.clear()
+
+    time.sleep(0.8)
+    return stopped
 
 
 def clear_chrome_lock_files(profile: Path | None = None) -> None:
