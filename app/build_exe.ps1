@@ -37,6 +37,8 @@ foreach ($p in @($outRoot, $work, $spec)) {
 }
 
 $addData = "$prices;."
+$versionFile = Join-Path $PSScriptRoot "version_info.txt"
+if (-not (Test-Path $versionFile)) { throw "Missing version_info.txt" }
 & $py -m PyInstaller `
   --noconfirm `
   --clean `
@@ -46,6 +48,7 @@ $addData = "$prices;."
   --distpath $outRoot `
   --workpath $work `
   --specpath $spec `
+  --version-file $versionFile `
   --add-data $addData `
   --hidden-import websocket `
   --hidden-import chrome_debug `
@@ -84,6 +87,10 @@ New-Item -ItemType Directory -Force -Path $final | Out-Null
 Copy-Item (Join-Path $built "BandCamp-Uploader.exe") (Join-Path $final "BandCamp-Uploader.exe") -Force
 Copy-Item (Join-Path $built "prices.txt") (Join-Path $final "prices.txt") -Force
 Copy-Item (Join-Path $built "HOW_TO_RUN.txt") (Join-Path $final "HOW_TO_RUN.txt") -Force
+
+# Authenticode sign as CN=ezixen (FileDescription already embeds GitHub URL via version_info.txt)
+. (Join-Path $PSScriptRoot "sign_exe.ps1")
+Invoke-EzixenSign -ExePath (Join-Path $final "BandCamp-Uploader.exe")
 
 # Scrub any leftover local-secrets beside the published EXE (old builds / locked Chrome)
 & $py -c @"
