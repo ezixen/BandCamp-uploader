@@ -1,15 +1,4 @@
-# Shared helpers for Bandcamp uploader PowerShell scripts.
-
-function Get-RepoRoot {
-  if ($PSScriptRoot) {
-    $parent = Split-Path -Parent $PSScriptRoot
-    if (Test-Path (Join-Path $parent "prices.txt")) { return $parent }
-    if (Test-Path (Join-Path $PSScriptRoot "bandcamp_upload_album.py")) {
-      return $parent
-    }
-  }
-  return (Get-Location).Path
-}
+# Shared helpers (not a numbered step). Dot-sourced by steps 3 and 4.
 
 function Resolve-PythonExe {
   $candidates = [System.Collections.Generic.List[string]]::new()
@@ -49,10 +38,10 @@ function Resolve-PythonExe {
   }
   if ($fallback) {
     Write-Warning "Python found but websocket-client missing: $fallback"
-    Write-Warning "Run .\install.ps1 or: pip install -r requirements.txt"
+    Write-Warning "Run .\1_install.ps1 or: pip install -r requirements.txt"
     return $fallback
   }
-  throw "Python 3.10+ not found on PATH. Run .\install.ps1 first (elevated)."
+  throw "Python 3.10+ not found on PATH. Run .\1_install.ps1 first (elevated)."
 }
 
 function Resolve-AlbumFolder([string]$PathIn) {

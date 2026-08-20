@@ -22,8 +22,7 @@ import websocket
 
 CDP = "http://127.0.0.1:9222"
 EDIT_ALBUM = "https://ezixen.bandcamp.com/edit_album"
-SCRIPTS_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPTS_DIR.parent
+REPO_ROOT = Path(__file__).resolve().parent
 PRICES_FILE = REPO_ROOT / "prices.txt"
 
 

@@ -1,57 +1,40 @@
-﻿Bandcamp Uploader — how to use (short)
+Bandcamp Uploader — how to use (short)
 ======================================
 
-1. Run install.ps1 (first time only)
-   - Right-click or run:  .\install.ps1
+1. Run 1_install.ps1 (first time only)
+   - .\1_install.ps1
    - Allow the Administrator / UAC prompt.
-   - It installs the latest Python (winget) and required packages.
-   - Defaults are fine.
+   - Installs Python (winget) and required packages.
 
-2. Start debug Chrome and log in (once per PC / profile)
-   - Run:  .\scripts\start_bandcamp_chrome.ps1
-   - Log into Bandcamp in that window and stay logged in.
-   - Your password is saved only in a local Chrome profile on your PC
-     (folder local-secrets\chrome-debug-profile). Nobody else gets it;
-     it is not uploaded anywhere.
+2. Run 2_start_chrome.ps1 and log in (once per PC / profile)
+   - .\2_start_chrome.ps1
+   - Log into Bandcamp in that window.
+   - Password stays only in local-secrets\chrome-debug-profile on your PC.
 
-3. Optional — check titles before uploading
-   - Run:  .\scripts\check_bandcamp_titles.ps1
-   - Paste your album folder path when asked, e.g.
-     d:\music\ezixen\2026\ezixen - goasted (louder)
-   - Or:  .\scripts\check_bandcamp_titles.ps1 "d:\path\to\album"
+3. Optional — check titles (spellcheck-style preview)
+   - .\3_check_titles.ps1
+   - Paste album folder path when asked, or:
+     .\3_check_titles.ps1 "d:\music\ezixen\2026\ezixen - goasted (louder)"
 
-4. Upload the album as a draft
-   - Run:  .\scripts\upload_bandcamp_album.ps1
-   - Paste the same folder path (or pass it as a parameter).
-   - When it finishes, review the draft in Chrome and publish yourself.
-     The script never publishes.
+4. Run the uploader
+   - .\4_bandcamp_uploader.ps1
+   - Paste the folder path, or pass it as a parameter.
+   - Review the draft in Chrome; publish yourself. Script never publishes.
 
 How filenames work
 ------------------
-Track files must look like:
-
   01. ezixen - intro.wav
 
-  • starts with a number (01, 02, …) — that sets order
-  • then artist name
-  • then " - "
-  • then the track title
-  • .wav only (other audio is ignored)
+  number → order
+  artist → stripped from title
+  " - " → separator
+  title → Bandcamp track title
+  .wav only
 
-The Bandcamp track title becomes just:  intro
-(underscores in the title become ? — e.g. doll_ → doll?)
+  Underscores in titles become ?  (doll_ → doll?)
 
-Cover art
----------
-The largest .jpg or .jpeg file in the album folder is used as the cover.
+Cover: largest .jpg / .jpeg in the folder.
 
-Prices
-------
-Edit prices.txt in the project folder anytime:
+Prices: edit prices.txt anytime (album= / track=).
 
-  album=9.99
-  track=0.99
-
-Every run reads that file. Change the numbers, save, upload again.
-
-More detail: see README.md
+More detail: README.md

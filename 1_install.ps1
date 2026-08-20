@@ -1,9 +1,7 @@
-# First-time setup for Bandcamp Uploader (Windows).
-# Elevates to Administrator, installs latest Python via winget, then pip packages.
+# 1) First-time setup — elevated: winget Python + pip requirements
 #
-# Usage:
-#   .\install.ps1              # full install (UAC prompt)
-#   .\install.ps1 -DryRun      # elevate + show what would run (no install)
+#   .\1_install.ps1
+#   .\1_install.ps1 -DryRun
 
 param(
   [switch]$DryRun
@@ -97,7 +95,7 @@ function Find-Python {
 
 $python = Find-Python
 if (-not $python) {
-  throw "Python installed but not found on PATH. Open a new terminal and re-run .\install.ps1"
+  throw "Python installed but not found on PATH. Open a new terminal and re-run .\1_install.ps1"
 }
 
 Write-Host "Using Python: $python"
@@ -123,6 +121,6 @@ track=0.99
 
 Write-Host ""
 Write-Host "Install complete."
-Write-Host "Next: .\scripts\start_bandcamp_chrome.ps1  (log into Bandcamp once)"
-Write-Host "Then:  .\scripts\upload_bandcamp_album.ps1"
+Write-Host "Next: .\2_start_chrome.ps1  (log into Bandcamp once)"
+Write-Host "Then:  .\4_bandcamp_uploader.ps1"
 exit 0
