@@ -2,17 +2,10 @@
 Bandcamp album draft uploader (no AI).
 
 Drives a visible Chrome via Chrome DevTools Protocol (CDP) on port 9222.
-Fills only: album title, cover (largest jpg), album price 9.99, numbered .wav
-tracks (title-only + 0.99 each). Saves draft. Does NOT publish.
+Fills only: album title, cover (largest jpg/jpeg), prices from prices.txt,
+numbered .wav tracks (title-only). Saves draft. Does NOT publish.
 
-Prereq:
-  1) Start debug Chrome (see scripts/start_bandcamp_chrome.ps1)
-  2) Log into Bandcamp once in that window
-  3) Run this script with an album folder path
-
-Usage:
-  C:/.venv/Scripts/python.exe scripts/bandcamp_upload_album.py "J:\\path\\to\\album"
-  C:/.venv/Scripts/python.exe scripts/bandcamp_upload_album.py "J:\\path\\to\\album" --dry-run
+Filename pattern:  01. Artist - track title.wav
 """
 from __future__ import annotations
 
@@ -29,31 +22,53 @@ import websocket
 
 CDP = "http://127.0.0.1:9222"
 EDIT_ALBUM = "https://ezixen.bandcamp.com/edit_album"
-ALBUM_PRICE = "9.99"
-TRACK_PRICE = "0.99"
+SCRIPTS_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPTS_DIR.parent
+PRICES_FILE = REPO_ROOT / "prices.txt"
+
+
+def load_prices() -> tuple[str, str]:
+    """Read album/track prices from prices.txt every run. Defaults 9.99 / 0.99."""
+    album, track = "9.99", "0.99"
+    if PRICES_FILE.is_file():
+        for raw in PRICES_FILE.read_text(encoding="utf-8").splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, val = line.split("=", 1)
+            key, val = key.strip().lower(), val.strip()
+            if key == "album" and val:
+                album = val
+            elif key == "track" and val:
+                track = val
+    return album, track
 
 
 def title_from_filename(name: str) -> str:
-    """Title only: no track number, no artist, no extension."""
+    """
+    Expect: 01. Artist - track title.wav
+    Result: track title only (_ → ?).
+    """
     stem = Path(name).stem
-    # Leading number + separators (., comma, dash, underscore-as-sep after number, spaces)
-    # e.g. "07," / "01." / "02 -"  — do NOT strip underscores that belong to the title yet
-    stem = re.sub(r"^\d+[.,\s-]*", "", stem)
-    # Artist with nearby separators; keep internal hyphens (little-boy)
-    stem = re.sub(r"(?i)(^|[\s._-]+)ezixen(?=[\s._-]+|$)", " ", stem)
-    stem = re.sub(r"(?i)\bezixen\b", "", stem)
-    stem = re.sub(r"\s{2,}", " ", stem).strip(" -.,")
-    # Filenames use _ where the real title has ?
-    stem = stem.replace("_", "?")
-    return stem.strip()
+    stem = re.sub(r"^\d+[.,\s-]*", "", stem).strip()
+    if " - " in stem:
+        title = stem.split(" - ", 1)[1]
+    else:
+        title = re.sub(r"(?i)\bezixen\b", "", stem)
+    title = title.replace("_", "?")
+    return title.strip(" -.,")
 
 
 def album_title_from_folder(folder: Path) -> str:
     stem = folder.name
-    stem = re.sub(r"(?i)(^|[\s._-]+)ezixen(?=[\s._-]+|$)", " ", stem)
-    stem = re.sub(r"(?i)\bezixen\b", "", stem)
-    stem = re.sub(r"\s{2,}", " ", stem).strip(" -_.,")
-    return stem
+    if " - " in stem:
+        # Prefer text after first " - " (Artist - Album Name)
+        left, right = stem.split(" - ", 1)
+        if re.search(r"(?i)ezixen", left) or len(left) < 40:
+            stem = right
+    else:
+        stem = re.sub(r"(?i)\bezixen\b", "", stem)
+    return re.sub(r"\s{2,}", " ", stem).strip(" -_.,")
 
 
 def numbered_wavs(folder: Path) -> list[Path]:
@@ -65,8 +80,9 @@ def numbered_wavs(folder: Path) -> list[Path]:
 def largest_jpg(folder: Path) -> Path:
     jpgs = [p for p in folder.iterdir() if p.suffix.lower() in {".jpg", ".jpeg"}]
     if not jpgs:
-        raise SystemExit("No jpg cover found in folder")
+        raise SystemExit("No jpg/jpeg cover found in folder")
     return max(jpgs, key=lambda p: p.stat().st_size)
+
 
 
 def cdp_alive() -> bool:
@@ -263,7 +279,7 @@ def ensure_new_album_page(cdp: Cdp):
         )
 
 
-def run_upload(folder: Path):
+def run_upload(folder: Path, album_price: str, track_price: str):
     wavs = numbered_wavs(folder)
     if not wavs:
         raise SystemExit("No numbered .wav files found (names must start with a digit)")
@@ -272,6 +288,8 @@ def run_upload(folder: Path):
 
     print("Album title:", album_title, flush=True)
     print("Cover:", cover.name, cover.stat().st_size, flush=True)
+    print("Prices file:", PRICES_FILE, flush=True)
+    print("Album price:", album_price, "| Track price:", track_price, flush=True)
     print("Tracks:", len(wavs), flush=True)
     for w in wavs:
         print(" ", w.name, "->", title_from_filename(w.name), flush=True)
@@ -284,7 +302,7 @@ def run_upload(folder: Path):
 
     print("Set album title/price...", flush=True)
     print(set_input_value(cdp, 'input[name="album.title"]', album_title), flush=True)
-    print(set_input_value(cdp, 'input[name="album.price"]', ALBUM_PRICE), flush=True)
+    print(set_input_value(cdp, 'input[name="album.price"]', album_price), flush=True)
 
     print("Upload cover...", flush=True)
     set_file_on_indexed_input(cdp, 0, cover)
@@ -338,7 +356,7 @@ def run_upload(folder: Path):
             raise RuntimeError(f"Timed out uploading {wav.name}")
 
         time.sleep(2)
-        fields = set_last_track_fields(cdp, title, TRACK_PRICE)
+        fields = set_last_track_fields(cdp, title, track_price)
         print("  fields:", fields, flush=True)
         wait_until(
             cdp,
@@ -390,10 +408,12 @@ def main():
     if not folder.is_dir():
         raise SystemExit(f"Not a folder: {folder}")
 
+    album_price, track_price = load_prices()
     wavs = numbered_wavs(folder)
     cover = largest_jpg(folder)
     print("Album title:", album_title_from_folder(folder), flush=True)
     print("Cover:", cover.name, flush=True)
+    print("Prices:", PRICES_FILE, f"album={album_price}", f"track={track_price}", flush=True)
     print("Tracks:", len(wavs), flush=True)
     for w in wavs:
         print(" ", w.name, "->", title_from_filename(w.name), flush=True)
@@ -409,7 +429,7 @@ def main():
             "Log into Bandcamp in that window, then retry."
         )
 
-    run_upload(folder)
+    run_upload(folder, album_price, track_price)
 
 
 if __name__ == "__main__":

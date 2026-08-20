@@ -1,189 +1,190 @@
 # Bandcamp Uploader
 
-Upload one album folder to Bandcamp as a **draft** (you review and publish yourself).
+Upload one local album folder to Bandcamp as a **draft**. You review and publish yourself.
 
-A small Python script drives a **visible Chrome** window through the Chrome DevTools Protocol (CDP). PowerShell wrappers make the steps easy to run by hand.
+Automation uses a **visible Chrome** window (Chrome DevTools Protocol on port 9222) plus small PowerShell scripts. No Bandcamp password is stored in this repo.
 
-Artist defaults (edit in `scripts/bandcamp_upload_album.py` if needed):
-
-| Field | Value |
+| | |
 |---|---|
-| Album price | `9.99` |
-| Track price | `0.99` each |
-| Cover | Largest `.jpg` / `.jpeg` in the folder |
-| Audio | Only `.wav` files whose names **start with a number**, in numeric order |
-| Track title | Title only — no track number, no artist name (`ezixen`), no extension; `_` → `?` |
-| Publish | **Never** — only **Save Album Draft** |
+| Humans (short) | [`how2use.txt`](how2use.txt) |
+| Install | [`install.ps1`](install.ps1) (elevated; winget Python + pip) |
+| Prices | [`prices.txt`](prices.txt) — edit anytime |
 
 ---
 
-## Requirements
+## What it does
 
-- Windows
-- [Google Chrome](https://www.google.com/chrome/)
-- [PowerShell 7+](https://github.com/PowerShell/PowerShell) recommended (`pwsh`); Windows PowerShell 5.1 usually works too
-- Python in the shared venv: `C:/.venv\Scripts\python.exe`
-- Python package: `websocket-client`  
-  ```powershell
-  C:/.venv/Scripts/python.exe -m pip install websocket-client
-  ```
+For each album folder you point at, the uploader:
+
+1. Opens Bandcamp’s **new album** editor in your debug Chrome session  
+2. Sets **album title** (from the folder name)  
+3. Sets **album price** from `prices.txt`  
+4. Uploads the **largest `.jpg` / `.jpeg`** in the folder as cover  
+5. Uploads each numbered **`.wav`** one at a time (Bandcamp allows only one upload at a time)  
+6. Sets each **track title** and **track price** (from `prices.txt`)  
+7. Clicks **Save Album Draft** — never Publish  
 
 ---
 
-## First-time setup (do this once)
+## First-time setup
 
-### 1. Get the files
+### Requirements
 
-Clone or copy this project to a folder you can write to, e.g. `D:\Dev\musicstuff`.
+- Windows 10/11  
+- [Google Chrome](https://www.google.com/chrome/)  
+- `winget` (App Installer from Microsoft Store — usually already present)  
+- Ability to approve a **UAC / Administrator** prompt once for install  
 
-### 2. Install the Python dependency
+### Install (automated)
+
+In PowerShell (`pwsh` preferred), from the project folder:
 
 ```powershell
-C:/.venv/Scripts/python.exe -m pip install websocket-client
+cd path\to\BandCamp-uploader
+.\install.ps1
 ```
 
-If you use another venv, change the `python` path inside the `.ps1` scripts.
+Approve the elevation prompt. The script will:
 
-### 3. Start the debug Chrome profile and log in
+1. Re-launch itself as Administrator  
+2. `winget install` **Python 3.13** (default install location; change the id in `install.ps1` if you prefer another version)  
+3. `pip install -r requirements.txt` (`websocket-client`)  
+4. Ensure `prices.txt` exists  
+
+To verify elevation reaches winget **without** installing:
 
 ```powershell
-cd D:\Dev\musicstuff
+.\install.ps1 -DryRun
+```
+
+After a real install, open a **new** terminal so PATH picks up Python.
+
+### Log into Bandcamp once (local Chrome profile)
+
+```powershell
 .\scripts\start_bandcamp_chrome.ps1
 ```
 
-What this does:
+- Starts Chrome with `--remote-debugging-port=9222` and `--remote-allow-origins=*`  
+- Uses an isolated profile: `local-secrets\chrome-debug-profile` (gitignored)  
+- Log into Bandcamp in that window  
 
-- Opens Chrome with remote debugging on port **9222**
-- Uses an **isolated profile** under `local-secrets\chrome-debug-profile` (not your everyday Chrome)
-- That profile is **gitignored** — login cookies stay on your PC only
-
-In the window that opens:
-
-1. Log into [Bandcamp](https://bandcamp.com/login) as your artist account.
-2. Confirm you can open your artist dashboard.
-3. Leave this Chrome alone for uploads (or reopen later with the same script — it should still be logged in).
-
-You only need to log in again if you clear that profile folder, use a different PC, or Bandcamp expires the session.
-
-### 4. You’re set
-
-Next times you only need steps under **Every upload** below (Chrome may already be running and logged in).
+Your login cookies stay **only on your PC** in that profile folder. They are not part of the git repo and are not sent to GitHub. Log in again only if you delete that folder or the session expires.
 
 ---
 
 ## Every upload
 
-Open a terminal in the project folder (`pwsh` preferred):
-
 ```powershell
-cd D:\Dev\musicstuff
-```
-
-### Step 1 — Start debug Chrome (if not already up)
-
-```powershell
+# 1) Debug Chrome (skip if already running + logged in)
 .\scripts\start_bandcamp_chrome.ps1
-```
 
-If Chrome is already on port 9222, the script reuses it. Make sure you’re still logged into Bandcamp in that window.
-
-### Step 2 — Optional: check titles before uploading
-
-```powershell
+# 2) Optional title / price preview
 .\scripts\check_bandcamp_titles.ps1
-```
-
-When prompted, paste your album folder path, for example:
-
-```text
-d:\music\ezixen\2026\ezixen - goasted (louder)
-```
-
-Or pass the path as an argument:
-
-```powershell
 .\scripts\check_bandcamp_titles.ps1 "d:\music\ezixen\2026\ezixen - goasted (louder)"
-```
 
-This only prints album title, cover file, and each track title. It does **not** upload.
-
-### Step 3 — Upload draft
-
-```powershell
+# 3) Upload draft
 .\scripts\upload_bandcamp_album.ps1
-```
-
-Paste the same folder path when asked, or:
-
-```powershell
 .\scripts\upload_bandcamp_album.ps1 "d:\music\ezixen\2026\ezixen - goasted (louder)"
 ```
 
-The script will:
+If you omit the path, the script prompts you to paste it. Quotes are optional.
 
-1. Open Bandcamp’s **new album** editor in the debug Chrome
-2. Set album title and price `9.99`
-3. Upload the largest jpg as cover
-4. Upload each numbered `.wav` **one at a time** (Bandcamp only allows one at a time)
-5. Set each track title and price `0.99`
-6. Click **Save Album Draft**
-7. Print a summary URL
-
-Then **you** review in Chrome and publish if it looks right.
+Then review the draft in Chrome and publish manually.
 
 ---
 
-## Album folder layout
+## File naming (important)
 
-Example:
+Track files must start with a **number**, then **artist**, then ` - `, then **title**:
 
 ```text
-ezixen - my album name\
-  01. ezixen - first song.wav
-  02. ezixen - second song_.wav    ← _ becomes ? in the title
-  07, ezixen - odd separator.wav   ← leading number+comma is OK
-  ezixen - my album name.jpg       ← used if it is the largest jpg
-  something-else.mp3               ← ignored
+01. ezixen - intro.wav
+02. ezixen - what's the password, doll_.wav
 ```
 
-- Non-wav audio is ignored.
-- Wavs that do **not** start with a digit are ignored.
-- Several jpgs: the **largest by file size** is the cover.
+| Part | Example | Used for |
+|---|---|---|
+| Number | `01.` | Sort order (only these wavs are uploaded) |
+| Artist | `ezixen` | Stripped from the Bandcamp title |
+| Separator | ` - ` | Required |
+| Title | `intro` | Becomes the Bandcamp track title |
+| Extension | `.wav` | Required (mp3 etc. ignored) |
+
+Title rules applied by the script:
+
+- Drop number + artist  
+- Keep only the track title  
+- Replace `_` with `?` (so `doll_` → `doll?`)  
+
+Album folder name example: `ezixen - goasted (louder)` → album title `goasted (louder)`.
 
 ---
 
-## Scripts (what each file is)
+## Cover art
 
-| File | Role |
-|---|---|
-| `scripts/start_bandcamp_chrome.ps1` | Start / reuse debug Chrome |
-| `scripts/check_bandcamp_titles.ps1` | Dry-run title preview |
-| `scripts/upload_bandcamp_album.ps1` | Full draft upload |
-| `scripts/bandcamp_upload_album.py` | Actual CDP automation |
+Among all `.jpg` / `.jpeg` files in the album folder, the script picks the **largest by file size**.
 
 ---
 
-## Safety notes
+## Prices (`prices.txt`)
 
-- Does **not** publish. You publish manually after review.
-- Does **not** put Bandcamp passwords in the repo. Login lives only in the local Chrome debug profile.
-- `local-secrets/` must stay out of git (see `.gitignore`).
-- Only fills title, cover, and prices — not tags, description, credits, etc.
+Edit this file in the project root whenever you want. Scripts read it **on every run**.
+
+```text
+album=9.99
+track=0.99
+```
+
+No code changes needed — save the file and upload.
+
+---
+
+## Project layout
+
+```text
+install.ps1                 Elevated setup (winget Python + pip)
+how2use.txt                 Short human steps
+README.md                   This file
+prices.txt                  Album / track prices
+requirements.txt            Python deps
+scripts/
+  common.ps1                Shared path helpers (find Python on PATH)
+  start_bandcamp_chrome.ps1 Debug Chrome launcher
+  check_bandcamp_titles.ps1 Dry-run preview
+  upload_bandcamp_album.ps1 Draft upload
+  bandcamp_upload_album.py  CDP automation
+local-secrets/              Local Chrome profile (not in git)
+```
+
+Python is resolved dynamically (`PATH`, `py -3`, common install dirs). No hard-coded `C:\.venv` required (that path is only a fallback if present).
+
+---
+
+## Safety
+
+- Does **not** publish  
+- Does **not** store Bandcamp passwords in the repo  
+- Fills only title, cover, and prices (not tags, description, credits, etc.)  
+- Respect [Bandcamp’s terms](https://bandcamp.com/terms_of_use)  
 
 ---
 
 ## Troubleshooting
 
-| Problem | What to try |
+| Problem | Fix |
 |---|---|
-| `Chrome CDP not on 9222` | Run `start_bandcamp_chrome.ps1` again |
-| CDP / WebSocket **403** | Chrome must be started with `--remote-allow-origins=*` (the start script does this). Kill old Chrome on 9222 and restart with the script. |
-| Album editor missing / login wall | Log in again in the debug Chrome window |
-| Wrong cover | Check which `.jpg` is largest in the folder |
-| Upload stuck | Bandcamp allows one track at a time; wait. Re-run only after checking you don’t already have a partial draft open. |
+| UAC / elevation cancelled | Re-run `.\install.ps1` and accept the prompt |
+| `winget` missing | Install “App Installer” from Microsoft Store |
+| `Python not found` | Finish install, then open a **new** terminal |
+| `Chrome CDP not on 9222` | Run `start_bandcamp_chrome.ps1` |
+| CDP WebSocket **403** | Chrome must use `--remote-allow-origins=*` (start script does this). Kill old debug Chrome and restart. |
+| Login wall on editor | Log in again in the debug Chrome window |
+| Wrong cover | Check which jpg/jpeg is largest in the folder |
+| Wrong prices | Edit `prices.txt` and re-upload / fix in Bandcamp UI |
 
 ---
 
 ## License / use
 
-For personal automation of your own Bandcamp artist account. Respect [Bandcamp’s terms](https://bandcamp.com/terms_of_use).
+Personal automation for your own Bandcamp artist account.

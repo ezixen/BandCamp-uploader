@@ -1,0 +1,4 @@
+﻿# Default Bandcamp draft prices (edit anytime — scripts read this file on every run)
+# Use a number with up to 2 decimal places, e.g. 9.99 or 0.99
+album=9.99
+track=0.99

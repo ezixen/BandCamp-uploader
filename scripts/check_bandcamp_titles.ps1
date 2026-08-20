@@ -1,4 +1,4 @@
-# 2/3 — Preview album title / cover / track titles (no browser upload).
+# 2/3 — Preview album title / cover / track titles / prices (no browser upload).
 #
 # Usage:
 #   .\scripts\check_bandcamp_titles.ps1
@@ -10,28 +10,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-
-function Resolve-AlbumFolder([string]$PathIn) {
-  if ([string]::IsNullOrWhiteSpace($PathIn)) {
-    $PathIn = Read-Host "Paste album folder path"
-  }
-  $PathIn = $PathIn.Trim().Trim('"').Trim("'")
-  if ([string]::IsNullOrWhiteSpace($PathIn)) {
-    throw "No folder path given."
-  }
-  if (-not (Test-Path -LiteralPath $PathIn)) {
-    throw "Folder not found: $PathIn"
-  }
-  return (Resolve-Path -LiteralPath $PathIn).Path
-}
+. (Join-Path $PSScriptRoot "common.ps1")
 
 $AlbumFolder = Resolve-AlbumFolder $AlbumFolder
-$python = "C:/.venv/Scripts/python.exe"
-$script = Join-Path $PSScriptRoot "bandcamp_upload_album.py"
+$python = Resolve-PythonExe
+$script = Get-UploaderPy
 
-if (-not (Test-Path $python)) { throw "Python not found: $python" }
-if (-not (Test-Path $script)) { throw "Uploader not found: $script" }
-
+Write-Host "Python: $python"
 Write-Host "Checking titles for: $AlbumFolder"
 & $python -u $script $AlbumFolder --dry-run
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

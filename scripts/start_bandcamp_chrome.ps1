@@ -3,7 +3,7 @@
 #
 # Usage:
 #   .\scripts\start_bandcamp_chrome.ps1
-# Then log into Bandcamp in that window (once per profile).
+# Then log into Bandcamp in that window (once per profile). Login stays local.
 
 $ErrorActionPreference = "Stop"
 
@@ -12,7 +12,7 @@ if (-not (Test-Path $chrome)) {
   $chrome = "$env:LocalAppData\Google\Chrome\Application\chrome.exe"
 }
 if (-not (Test-Path $chrome)) {
-  throw "Chrome not found. Install Google Chrome or edit this script's path."
+  throw "Chrome not found. Install Google Chrome first."
 }
 
 $root = Split-Path -Parent $PSScriptRoot
@@ -42,8 +42,6 @@ try {
 }
 
 Write-Host ""
-Write-Host "Log into Bandcamp if needed, then optionally:"
-Write-Host "  .\scripts\check_bandcamp_titles.ps1"
-Write-Host "Or upload a draft:"
-Write-Host "  .\scripts\upload_bandcamp_album.ps1"
-Write-Host '  .\scripts\upload_bandcamp_album.ps1 "d:\music\ezixen\2026\ezixen - some album"'
+Write-Host "Log into Bandcamp if needed (password stays in this local Chrome profile only)."
+Write-Host "Optional title check:  .\scripts\check_bandcamp_titles.ps1"
+Write-Host "Upload draft:          .\scripts\upload_bandcamp_album.ps1"
