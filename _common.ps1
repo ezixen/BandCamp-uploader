@@ -44,18 +44,56 @@ function Resolve-PythonExe {
   throw "Python 3.10+ not found on PATH. Run .\1_install.ps1 first (elevated)."
 }
 
-function Resolve-AlbumFolder([string]$PathIn) {
-  if ([string]::IsNullOrWhiteSpace($PathIn)) {
-    $PathIn = Read-Host "Paste album folder path"
+function Split-AlbumPathInput([string]$PathIn) {
+  # Newlines / | / ; always separate.
+  # Comma separates only when the next piece looks like a Windows path (D:\... or "D:\...).
+  $normalized = $PathIn -replace '[\r\n]+', ';'
+  $chunks = [regex]::Split($normalized, '\s*;\s*|\s*\|\s*|\s*,\s*(?=[A-Za-z]:\\|"[A-Za-z]:\\)')
+  $out = @()
+  foreach ($c in $chunks) {
+    $t = $c.Trim().Trim('"').Trim("'")
+    if ($t) { $out += $t }
   }
-  $PathIn = $PathIn.Trim().Trim('"').Trim("'")
+  return $out
+}
+
+function Resolve-AlbumFolders([string]$PathIn) {
   if ([string]::IsNullOrWhiteSpace($PathIn)) {
+    Write-Host "Paste one album folder path, or several separated by ; (or , between drive paths)."
+    Write-Host 'Example: d:\music\album1; d:\music\album2'
+    $PathIn = Read-Host "Path(s)"
+  }
+
+  $rawParts = Split-AlbumPathInput $PathIn
+  if ($rawParts.Count -eq 0) {
     throw "No folder path given."
   }
-  if (-not (Test-Path -LiteralPath $PathIn)) {
-    throw "Folder not found: $PathIn"
+
+  $ok = New-Object System.Collections.Generic.List[string]
+  $errors = New-Object System.Collections.Generic.List[string]
+
+  foreach ($part in $rawParts) {
+    if (-not (Test-Path -LiteralPath $part)) {
+      $msg = "BAD PATH (not found): $part"
+      $errors.Add($msg) | Out-Null
+      Write-Host "ERROR: $msg" -ForegroundColor Red
+      continue
+    }
+    $item = Get-Item -LiteralPath $part -ErrorAction SilentlyContinue
+    if (-not $item -or -not $item.PSIsContainer) {
+      $msg = "BAD PATH (not a folder): $part"
+      $errors.Add($msg) | Out-Null
+      Write-Host "ERROR: $msg" -ForegroundColor Red
+      continue
+    }
+    $resolved = (Resolve-Path -LiteralPath $part).Path
+    if (-not $ok.Contains($resolved)) { $ok.Add($resolved) | Out-Null }
   }
-  return (Resolve-Path -LiteralPath $PathIn).Path
+
+  return [pscustomobject]@{
+    Folders = @($ok)
+    Errors  = @($errors)
+  }
 }
 
 function Get-UploaderPy {

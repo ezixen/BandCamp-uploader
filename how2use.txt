@@ -4,37 +4,33 @@ Bandcamp Uploader — how to use (short)
 1. Run 1_install.ps1 (first time only)
    - .\1_install.ps1
    - Allow the Administrator / UAC prompt.
-   - Installs Python (winget) and required packages.
 
 2. Run 2_start_chrome.ps1 and log in (once per PC / profile)
    - .\2_start_chrome.ps1
-   - Log into Bandcamp in that window.
-   - Password stays only in local-secrets\chrome-debug-profile on your PC.
+   - Log into Bandcamp in that window (password stays local only).
 
-3. Optional — check titles (spellcheck-style preview)
+3. Optional — check titles
    - .\3_check_titles.ps1
-   - Paste album folder path when asked, or:
-     .\3_check_titles.ps1 "d:\music\ezixen\2026\ezixen - goasted (louder)"
+   - One album, or several paths separated by ; 
+     Example:
+     d:\music\album1; d:\music\album2
+   - Bad paths are reported in red; valid ones are still checked.
 
 4. Run the uploader
    - .\4_bandcamp_uploader.ps1
-   - Paste the folder path, or pass it as a parameter.
-   - Review the draft in Chrome; publish yourself. Script never publishes.
+   - Same: one path, or multiple with ;
+     .\4_bandcamp_uploader.ps1 "d:\music\a; d:\music\b"
+   - Each album is uploaded one after another as a draft.
+   - Errors / bad paths / failures are printed; summary at the end.
+   - Review drafts in Chrome; you publish. Script never publishes.
 
 How filenames work
 ------------------
   01. ezixen - intro.wav
-
-  number → order
-  artist → stripped from title
-  " - " → separator
-  title → Bandcamp track title
-  .wav only
-
-  Underscores in titles become ?  (doll_ → doll?)
+  number, artist, " - ", title, .wav
+  Underscores in titles become ?
 
 Cover: largest .jpg / .jpeg in the folder.
-
-Prices: edit prices.txt anytime (album= / track=).
+Prices: edit prices.txt (album= / track=).
 
 More detail: README.md

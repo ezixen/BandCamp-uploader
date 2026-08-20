@@ -1,44 +1,50 @@
 # Bandcamp Uploader
 
-Upload one local album folder to Bandcamp as a **draft**. You review and publish yourself.
-
-Flat layout — run the numbered scripts in order from this folder.
+Upload one or more local album folders to Bandcamp as **drafts**. You review and publish yourself.
 
 | Step | Script | Purpose |
 |---|---|---|
 | 1 | `1_install.ps1` | Elevated install: winget Python + pip deps |
 | 2 | `2_start_chrome.ps1` | Debug Chrome; log in once (local profile) |
 | 3 | `3_check_titles.ps1` | Optional title / cover / price preview |
-| 4 | `4_bandcamp_uploader.ps1` | Upload album draft (no publish) |
+| 4 | `4_bandcamp_uploader.ps1` | Upload album draft(s) (no publish) |
 
-Helpers (not steps): `_common.ps1`, `bandcamp_upload_album.py`, `prices.txt`, `requirements.txt`
+Helpers: `_common.ps1`, `bandcamp_upload_album.py`, `prices.txt`, `requirements.txt`  
+Short guide: [`how2use.txt`](how2use.txt)
 
-Short human guide: [`how2use.txt`](how2use.txt)
+---
+
+## Multiple albums in one run
+
+Paste **several full folder paths** separated by **`;`** (recommended).  
+A **`,`** also works when it sits between two drive paths (`D:\...`).
+
+```powershell
+.\4_bandcamp_uploader.ps1 "d:\music\album1; d:\music\album2; d:\music\album3"
+```
+
+Or omit the argument and paste when prompted.
+
+The script processes albums **one after another**. For each path it reports:
+
+- **BAD PATH** — missing or not a folder (skipped)
+- **UPLOAD FAILED** — exception or non-zero exit for that album
+- **OK** — draft finished for that album
+
+A summary at the end lists successes and every error. Exit code is non-zero if anything failed or was invalid.
+
+Same multi-path rules apply to `.\3_check_titles.ps1`.
 
 ---
 
 ## First-time setup
 
 ```powershell
-cd path\to\BandCamp-uploader
 .\1_install.ps1
-```
-
-Approve UAC. Installs Python 3.13 via winget (default path) and `websocket-client`.
-
-Dry-run (elevate, reach winget, do not install):
-
-```powershell
-.\1_install.ps1 -DryRun
-```
-
-Then:
-
-```powershell
 .\2_start_chrome.ps1
 ```
 
-Log into Bandcamp in that window. Login cookies stay in `local-secrets\chrome-debug-profile` (local only, not in git).
+Log into Bandcamp in the debug Chrome window (cookies stay in `local-secrets\chrome-debug-profile`).
 
 ---
 
@@ -46,22 +52,17 @@ Log into Bandcamp in that window. Login cookies stay in `local-secrets\chrome-de
 
 ```powershell
 .\2_start_chrome.ps1
-.\3_check_titles.ps1 "d:\path\to\album"          # optional
-.\4_bandcamp_uploader.ps1 "d:\path\to\album"
+.\3_check_titles.ps1 "d:\path\a; d:\path\b"     # optional
+.\4_bandcamp_uploader.ps1 "d:\path\a; d:\path\b"
 ```
-
-Or omit the path and paste when prompted.
 
 ---
 
-## What it fills
+## What it fills (per album)
 
-- Album title (from folder name)
-- Album / track prices from `prices.txt`
-- Cover = largest `.jpg` / `.jpeg` in the folder
-- Numbered `.wav` files only, one at a time
-- Track titles only (see naming below)
-- **Save Album Draft** — never Publish
+- Album title, prices from `prices.txt`, largest jpg/jpeg cover  
+- Numbered `.wav` files in order, title-only (`01. Artist - title.wav`)  
+- **Save Album Draft** only — never Publish  
 
 ---
 
@@ -71,19 +72,11 @@ Or omit the path and paste when prompted.
 01. ezixen - intro.wav
 ```
 
-1. Number first (sort order)  
-2. Artist name  
-3. ` - `  
-4. Track title  
-5. `.wav`
-
-Bandcamp title becomes `intro`. `_` in titles becomes `?`.
+Number → order · Artist stripped · Title kept · `_` → `?`
 
 ---
 
-## Prices
-
-Edit `prices.txt` anytime; read on every run:
+## Prices (`prices.txt`)
 
 ```text
 album=9.99
@@ -94,8 +87,6 @@ track=0.99
 
 ## Safety
 
-- No publish  
-- No passwords in the repo  
-- Respect Bandcamp terms  
+No publish · no passwords in repo · respect Bandcamp terms  
 
-Repo: https://github.com/ezixen/BandCamp-uploader
+https://github.com/ezixen/BandCamp-uploader
