@@ -3,6 +3,7 @@
 **[Download ZIP](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-uploader.zip)** — latest release (unpack, then start at `1_install.ps1`)
 
 ---
+
 Upload one or more local album folders to Bandcamp as **drafts**. You review and publish yourself.
 
 | Step | Script | Purpose |
