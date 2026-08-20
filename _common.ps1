@@ -3,7 +3,9 @@
 function Resolve-PythonExe {
   $candidates = [System.Collections.Generic.List[string]]::new()
   function Add-Cand([string]$p) {
-    if ($p -and (Test-Path -LiteralPath $p) -and -not $candidates.Contains($p)) { [void]$candidates.Add($p) }
+    if ($p -and (Test-Path -LiteralPath $p) -and ($p -notmatch '\\WindowsApps\\') -and -not $candidates.Contains($p)) {
+      [void]$candidates.Add($p)
+    }
   }
 
   Add-Cand "C:\.venv\Scripts\python.exe"
@@ -12,36 +14,45 @@ function Resolve-PythonExe {
     if ($c -and $c.Source) { Add-Cand $c.Source }
   }
   if (Get-Command "py" -ErrorAction SilentlyContinue) {
-    try {
-      $viaPy = & py -3 -c "import sys; print(sys.executable)" 2>$null
-      if ($viaPy) { Add-Cand $viaPy.Trim() }
-    } catch {}
+    foreach ($arg in @("-3", "-3.14", "-3.13", "-3.12", "-3.11", "-3.10")) {
+      try {
+        $viaPy = & py $arg -c "import sys; print(sys.executable)" 2>$null
+        if ($viaPy) { Add-Cand $viaPy.Trim() }
+      } catch {}
+    }
   }
   $pf = ${env:ProgramFiles}
   $local = $env:LOCALAPPDATA
-  foreach ($p in @(
-      "$local\Programs\Python\Python313\python.exe",
-      "$local\Programs\Python\Python312\python.exe",
-      "$pf\Python313\python.exe",
-      "$pf\Python312\python.exe",
-      "$pf\Python314\python.exe"
-    )) { Add-Cand $p }
+  # Newest first
+  foreach ($n in 20..10) {
+    Add-Cand "$pf\Python3$n\python.exe"
+    Add-Cand "$local\Programs\Python\Python3$n\python.exe"
+  }
 
-  $fallback = $null
+  $scored = @()
   foreach ($p in $candidates) {
     try {
-      $hasWs = & $p -c "import websocket, sys; print('OK' if sys.version_info >= (3, 10) else 'NO')" 2>$null
-      if ($hasWs -match "OK") { return $p }
-      $ver = & $p -c "import sys; print('OK' if sys.version_info >= (3, 10) else 'NO')" 2>$null
-      if ($ver -match "OK" -and -not $fallback) { $fallback = $p }
+      $raw = & $p -c "import sys; print('%d.%d.%d' % sys.version_info[:3])" 2>$null
+      if (-not $raw) { continue }
+      $parts = ($raw.Trim() -split '\.') | ForEach-Object { [int]$_ }
+      if ($parts[0] -ne 3 -or $parts[1] -lt 10) { continue }
+      $hasWs = & $p -c "import websocket; print('WS')" 2>$null
+      $scored += [pscustomobject]@{
+        Path = $p
+        Major = $parts[0]; Minor = $parts[1]; Patch = $parts[2]
+        HasWs = ($hasWs -match 'WS')
+      }
     } catch {}
   }
-  if ($fallback) {
-    Write-Warning "Python found but websocket-client missing: $fallback"
-    Write-Warning "Run .\1_install.ps1 or: pip install -r requirements.txt"
-    return $fallback
+  if ($scored.Count -eq 0) {
+    throw "Python 3.10+ not found on PATH. Run .\1_install.ps1 first (elevated)."
   }
-  throw "Python 3.10+ not found on PATH. Run .\1_install.ps1 first (elevated)."
+  $bestWs = $scored | Where-Object { $_.HasWs } | Sort-Object Major, Minor, Patch -Descending | Select-Object -First 1
+  if ($bestWs) { return $bestWs.Path }
+  $fallback = $scored | Sort-Object Major, Minor, Patch -Descending | Select-Object -First 1
+  Write-Warning "Python found but websocket-client missing: $($fallback.Path)"
+  Write-Warning "Run .\1_install.ps1 or: pip install -r requirements.txt"
+  return $fallback.Path
 }
 
 function Split-AlbumPathInput([string]$PathIn) {

@@ -27,7 +27,10 @@ Script path (PowerShell steps)
 
 1. Run 1_install.bat (or 1_install.ps1) — first time only
    - Allow the Administrator / UAC prompt.
-   - Installs Python (winget) and required packages.
+   - Installs the newest Python 3.x from winget (e.g. 3.14) if you do not
+     already have Python 3.10+, then pip packages.
+   - Skips winget if a usable Python is already installed (e.g. you cancelled
+     an older 3.13 install — keep your newer one).
 
 2. Run 2_start_chrome.bat (or .ps1) and log in (once per PC / profile)
 

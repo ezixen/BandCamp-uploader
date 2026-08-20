@@ -27,7 +27,7 @@ Rebuild from source: `app/build_exe.ps1` (uses `C:/.venv` Python + PyInstaller).
 | Step | File | Purpose |
 |---|---|---|
 | 0 | `0_associate_ps1.bat` | **Do this first** — bind `.ps1` to built-in Windows PowerShell and clear other handlers |
-| 1 | `1_install.bat` / `.ps1` | Elevated install: winget Python + pip deps |
+| 1 | `1_install.bat` / `.ps1` | Elevated install: **newest** winget Python 3.x (currently 3.14) + pip deps; skips install if 3.10+ already present |
 | 2 | `2_start_chrome.bat` / `.ps1` | Debug Chrome; log in once |
 | 3 | `3_check_titles.bat` / `.ps1` | Optional title / cover / price preview |
 | 4 | `4_bandcamp_uploader.bat` / `.ps1` | Upload album draft(s) |

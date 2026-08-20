@@ -6,4 +6,5 @@ __pycache__/
 .env
 app/_pyi_work/
 app/_pyi_spec/
+app/_build_out/
 *.spec

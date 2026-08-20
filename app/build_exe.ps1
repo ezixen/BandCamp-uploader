@@ -1,14 +1,12 @@
 # Build BandCamp-Uploader.exe (onedir) into app\BandCamp-Uploader\
-# Run from repo root with:  C:/.venv/Scripts/python.exe -m pip install pyinstaller websocket-client
-# Then:  powershell -File app\build_exe.ps1
+# Uses newest available Python from C:/.venv (or PATH). Bundles that runtime into the EXE.
+#
+#   powershell -NoProfile -ExecutionPolicy Bypass -File app\build_exe.ps1
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 if (-not (Test-Path (Join-Path $root "bandcamp_upload_album.py"))) {
-  $root = $PSScriptRoot
-  if (-not (Test-Path (Join-Path $root "bandcamp_upload_album.py"))) {
-    throw "Run from musicstuff repo (bandcamp_upload_album.py missing)."
-  }
+  throw "Run from musicstuff repo (bandcamp_upload_album.py missing)."
 }
 
 $py = "C:\.venv\Scripts\python.exe"
@@ -16,45 +14,43 @@ if (-not (Test-Path $py)) {
   $py = (Get-Command python -ErrorAction Stop).Source
 }
 
-Write-Host "Python: $py"
+Write-Host "Build Python: $py"
+& $py -c "import sys; print(sys.version)"
 & $py -m pip install -q "pyinstaller>=6.0" "websocket-client>=1.6.0"
 
 $appPy = Join-Path $PSScriptRoot "bandcamp_app.py"
 $prices = Join-Path $root "prices.txt"
-$dist = Join-Path $PSScriptRoot "BandCamp-Uploader"
+$outRoot = Join-Path $PSScriptRoot "_build_out"
+$distName = "BandCamp-Uploader"
+$final = Join-Path $PSScriptRoot $distName
 $work = Join-Path $PSScriptRoot "_pyi_work"
 $spec = Join-Path $PSScriptRoot "_pyi_spec"
 
-if (Test-Path $dist) { Remove-Item $dist -Recurse -Force }
-if (Test-Path $work) { Remove-Item $work -Recurse -Force }
-if (Test-Path $spec) { Remove-Item $spec -Recurse -Force }
+foreach ($p in @($outRoot, $work, $spec)) {
+  if (Test-Path $p) { Remove-Item $p -Recurse -Force }
+}
 
-# Windows add-data: source;dest
 $addData = "$prices;."
-
 & $py -m PyInstaller `
   --noconfirm `
   --clean `
   --console `
-  --name "BandCamp-Uploader" `
+  --name $distName `
   --paths $root `
-  --distpath $PSScriptRoot `
+  --distpath $outRoot `
   --workpath $work `
   --specpath $spec `
   --add-data $addData `
   --hidden-import websocket `
-  --collect-all websocket `
   $appPy
 
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed: $LASTEXITCODE" }
 
-$outExe = Join-Path $dist "BandCamp-Uploader.exe"
+$built = Join-Path $outRoot $distName
+$outExe = Join-Path $built "BandCamp-Uploader.exe"
 if (-not (Test-Path $outExe)) { throw "Missing $outExe" }
 
-# Ensure prices.txt beside exe (editable)
-Copy-Item $prices (Join-Path $dist "prices.txt") -Force
-
-# Short how-to next to exe
+Copy-Item $prices (Join-Path $built "prices.txt") -Force
 @"
 BandCamp Uploader (EXE)
 =======================
@@ -72,8 +68,15 @@ Latest always (GitHub):
 Needs: Google Chrome installed.
 Edits: prices.txt in this folder (album= / track=)
 Profile: local-secrets\chrome-debug-profile (created on first run)
-"@ | Set-Content (Join-Path $dist "HOW_TO_RUN.txt") -Encoding UTF8
+"@ | Set-Content (Join-Path $built "HOW_TO_RUN.txt") -Encoding UTF8
+
+# Publish into app\BandCamp-Uploader (keep existing local-secrets if Chrome has it locked)
+New-Item -ItemType Directory -Force -Path $final | Out-Null
+& robocopy $built $final /E /XD local-secrets /NFL /NDL /NJH /NJS /nc /ns /np /R:2 /W:1 | Out-Null
+Copy-Item (Join-Path $built "BandCamp-Uploader.exe") (Join-Path $final "BandCamp-Uploader.exe") -Force
+Copy-Item (Join-Path $built "prices.txt") (Join-Path $final "prices.txt") -Force
+Copy-Item (Join-Path $built "HOW_TO_RUN.txt") (Join-Path $final "HOW_TO_RUN.txt") -Force
 
 Write-Host ""
-Write-Host "OK built: $outExe"
-Get-ChildItem $dist | Select-Object Name, Length | Format-Table -AutoSize
+Write-Host "OK built: $(Join-Path $final 'BandCamp-Uploader.exe')"
+Get-ChildItem $final | Select-Object Name, Length | Format-Table -AutoSize
