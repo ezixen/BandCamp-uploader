@@ -156,10 +156,10 @@ Longer playbook: **`docs/BANDCAMP_UPLOAD.md`**.
 
 High level:
 
-1. Start/attach external Chrome on `9222` with `--remote-allow-origins=*` and the project debug profile; user logs in.
+1. Start/attach external Chrome on `9222` with `--remote-allow-origins=http://127.0.0.1` and the project debug profile; user logs in. CDP clients must send `Origin: http://127.0.0.1` (never use `*`).
 2. One album folder path from the user.
 3. `+ Add` → new album; snapshot page and learn the layout first.
 4. Fill **only** album title, largest `.jpg` cover, album price `9.99`, numbered `.wav` tracks (**title-only** names + `0.99`). Nothing else.
 5. Upload numbered wavs one at a time, in numeric order; wait between uploads.
 6. **Do not publish** — tell the user the draft is ready; they publish manually.
-7. DistroKid is later; do not start DistroKid until Bandcamp flow is smooth.
+7. Multiple uploader processes may share one debug Chrome: each opens and keeps its **own** tab(s). See sibling DistroKid-uploader / DK-BC-Uploader repos.

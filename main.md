@@ -119,7 +119,7 @@ New-Item -ItemType Directory -Force -Path $userData | Out-Null
 # If something already owns port 9222 without allow-origins, kill it first, then:
 Start-Process -FilePath $chrome -ArgumentList @(
   "--remote-debugging-port=9222",
-  "--remote-allow-origins=*",
+  "--remote-allow-origins=http://127.0.0.1",
   "--user-data-dir=$userData",
   "https://bandcamp.com/login"
 )
@@ -128,7 +128,7 @@ Start-Process -FilePath $chrome -ArgumentList @(
 | Parameter | Why |
 |---|---|
 | `--remote-debugging-port=9222` | CDP endpoint at `http://127.0.0.1:9222` |
-| `--remote-allow-origins=*` | Without this, WebSocket clients get **403 Forbidden** |
+| `--remote-allow-origins=http://127.0.0.1` | Without an allowed origin, WebSocket clients get **403 Forbidden**. Do not use `*` — any page in that Chrome could then attach to CDP. CDP clients must send `Origin: http://127.0.0.1` |
 | `--user-data-dir=...\local-secrets\chrome-debug-profile` | Isolated profile (gitignored); keeps cookies/login without touching normal Chrome |
 | Start URL | Login or dashboard |
 
@@ -141,7 +141,7 @@ Start-Process -FilePath $chrome -ArgumentList @(
 Optional Python smoke (shared venv):
 
 ```powershell
-C:/.venv/Scripts/python.exe -c "import json,urllib.request,websocket; pages=json.load(urllib.request.urlopen('http://127.0.0.1:9222/json/list')); page=next(p for p in pages if p.get('type')=='page'); ws=websocket.create_connection(page['webSocketDebuggerUrl']); ws.send(json.dumps({'id':1,'method':'Runtime.evaluate','params':{'expression':'document.title','returnByValue':True}})); print(ws.recv()); ws.close()"
+C:/.venv/Scripts/python.exe -c "import json,urllib.request,websocket; pages=json.load(urllib.request.urlopen('http://127.0.0.1:9222/json/list')); page=next(p for p in pages if p.get('type')=='page'); ws=websocket.create_connection(page['webSocketDebuggerUrl'], suppress_origin=True, header=['Origin: http://127.0.0.1']); ws.send(json.dumps({'id':1,'method':'Runtime.evaluate','params':{'expression':'document.title','returnByValue':True}})); print(ws.recv()); ws.close()"
 ```
 
 ### Startup sequence before filling titles

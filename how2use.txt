@@ -17,11 +17,16 @@ EASIEST (no install) — EXE
 5. Review drafts in Chrome; you publish
 
 You can run several BandCamp-Uploader.exe at once on the same debug Chrome:
-each instance opens its own new tab and keeps using it.
+  1) Start Chrome / log in once
+  2) Open multiple EXE windows
+  3) Each opens its own new Bandcamp tab and keeps it
+  4) Paste a different album folder into each window
+  Do not close another window's tab while it is uploading.
 
 Needs Google Chrome. Edit prices.txt next to the exe if you want.
 Chrome login is stored in %LOCALAPPDATA%\BandCamp-Uploader\ (not in the app folder),
 so you can delete the unpacked folder anytime (any drive).
+Do not browse untrusted sites in that debug Chrome. Delete the AppData folder to wipe login.
 After each quit: caches/temp cleared; Bandcamp login kept.
 
 Script path (PowerShell steps)

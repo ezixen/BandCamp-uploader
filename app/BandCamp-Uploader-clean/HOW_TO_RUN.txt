@@ -1,0 +1,17 @@
+﻿BandCamp Uploader (EXE)
+=======================
+
+Latest always (GitHub):
+  https://github.com/ezixen/BandCamp-uploader
+  https://github.com/ezixen/BandCamp-uploader/releases/latest
+  EXE pack: https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip
+
+1. Double-click BandCamp-Uploader.exe
+2. Log into Bandcamp in the Chrome window that opens (once)
+3. Paste an album folder path, Enter â€” repeat for more albums
+4. Review drafts in Chrome; publish yourself
+
+Needs: Google Chrome installed.
+Edits: prices.txt in this folder (album= / track=)
+Chrome login: %LOCALAPPDATA%\BandCamp-Uploader\ (kept between runs; never beside this EXE)
+On quit: debug Chrome stops; caches/temp cleared; this folder stays deletable

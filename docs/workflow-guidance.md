@@ -24,7 +24,7 @@ $userData = "D:\Dev\musicstuff\local-secrets\chrome-debug-profile"
 New-Item -ItemType Directory -Force -Path $userData | Out-Null
 Start-Process -FilePath $chrome -ArgumentList @(
   "--remote-debugging-port=9222",
-  "--remote-allow-origins=*",
+  "--remote-allow-origins=http://127.0.0.1",
   "--user-data-dir=$userData",
   "https://bandcamp.com/login"
 )
@@ -33,7 +33,7 @@ Start-Process -FilePath $chrome -ArgumentList @(
 All three flags matter:
 
 - `--remote-debugging-port=9222`
-- `--remote-allow-origins=*` (required or CDP gets 403)
+- `--remote-allow-origins=http://127.0.0.1` (required or CDP gets 403; never `*`, and CDP clients must send `Origin: http://127.0.0.1`)
 - `--user-data-dir=D:\Dev\musicstuff\local-secrets\chrome-debug-profile`
 
 Check: `http://127.0.0.1:9222/json/version` returns JSON.

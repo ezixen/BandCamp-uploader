@@ -4,8 +4,8 @@
 # Company / description point back to GitHub (ezixen).
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 5, 3, 0),
-    prodvers=(1, 5, 3, 0),
+    filevers=(1, 5, 4, 0),
+    prodvers=(1, 5, 4, 0),
     mask=0x3F,
     flags=0x0,
     OS=0x40004,
@@ -21,12 +21,12 @@ VSVersionInfo(
           [
             StringStruct(u'CompanyName', u'ezixen'),
             StringStruct(u'FileDescription', u'https://github.com/ezixen/BandCamp-uploader'),
-            StringStruct(u'FileVersion', u'1.5.3.0'),
+            StringStruct(u'FileVersion', u'1.5.4.0'),
             StringStruct(u'InternalName', u'BandCamp-Uploader'),
             StringStruct(u'LegalCopyright', u'Copyright (c) ezixen — https://github.com/ezixen/BandCamp-uploader'),
             StringStruct(u'OriginalFilename', u'BandCamp-Uploader.exe'),
             StringStruct(u'ProductName', u'BandCamp Uploader by ezixen'),
-            StringStruct(u'ProductVersion', u'1.5.3.0'),
+            StringStruct(u'ProductVersion', u'1.5.4.0'),
             StringStruct(u'Comments', u'Open-source Bandcamp draft uploader. Source: https://github.com/ezixen/BandCamp-uploader')
           ]
         )

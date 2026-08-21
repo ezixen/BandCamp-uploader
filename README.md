@@ -21,8 +21,12 @@ Upload local album folders to Bandcamp as **drafts**. You review and publish you
 4. Paste one album folder path at a time; press Enter after each
 5. Review drafts in Chrome — the app never publishes
 
-**Several instances at once:** start debug Chrome once, then run multiple EXE/script
-processes — each opens its **own new tab** and keeps using it (same Chrome on port 9222).
+**Several instances at once (multi-album):**
+1. Start debug Chrome **once** (`2_start_chrome` / the EXE starts it if needed) and log in.
+2. Open **two or more** copies of the EXE (or script runners).
+3. Each copy opens a **new Bandcamp tab** and remembers it for that process — it will not steal another copy’s tab.
+4. Paste a different album folder into each instance; review each tab when that instance finishes.
+5. Do not close another instance’s tab while it is still uploading.
 
 Requires **Google Chrome**. Optional: edit `prices.txt` beside the exe.  
 
