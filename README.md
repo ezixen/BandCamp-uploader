@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="images/uploader-logo.png" alt="uploader logo" width="420"/>
+</div>
+
 # Bandcamp Uploader
 
 **GitHub (latest always):** https://github.com/ezixen/BandCamp-uploader  
@@ -16,6 +20,9 @@ Upload local album folders to Bandcamp as **drafts**. You review and publish you
 3. Log into Bandcamp in the Chrome window that opens (once per PC)
 4. Paste one album folder path at a time; press Enter after each
 5. Review drafts in Chrome — the app never publishes
+
+**Several instances at once:** start debug Chrome once, then run multiple EXE/script
+processes — each opens its **own new tab** and keeps using it (same Chrome on port 9222).
 
 Requires **Google Chrome**. Optional: edit `prices.txt` beside the exe.  
 

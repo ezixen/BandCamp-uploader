@@ -39,6 +39,9 @@ foreach ($p in @($outRoot, $work, $spec)) {
 $addData = "$prices;."
 $versionFile = Join-Path $PSScriptRoot "version_info.txt"
 if (-not (Test-Path $versionFile)) { throw "Missing version_info.txt" }
+$iconFile = Join-Path $PSScriptRoot "uploader.ico"
+if (-not (Test-Path $iconFile)) { $iconFile = Join-Path $root "images\uploader-logo.ico" }
+if (-not (Test-Path $iconFile)) { throw "Missing uploader.ico / images\uploader-logo.ico" }
 & $py -m PyInstaller `
   --noconfirm `
   --clean `
@@ -49,9 +52,11 @@ if (-not (Test-Path $versionFile)) { throw "Missing version_info.txt" }
   --workpath $work `
   --specpath $spec `
   --version-file $versionFile `
+  --icon $iconFile `
   --add-data $addData `
   --hidden-import websocket `
   --hidden-import chrome_debug `
+  --hidden-import cdp_owned_tab `
   $appPy
 
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed: $LASTEXITCODE" }
