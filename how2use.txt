@@ -16,6 +16,9 @@ EASIEST (no install) — EXE
 4. Paste an album folder path, press Enter; repeat for more albums
 5. Review drafts in Chrome; you publish
 
+You can run several BandCamp-Uploader.exe at once on the same debug Chrome:
+each instance opens its own new tab and keeps using it.
+
 Needs Google Chrome. Edit prices.txt next to the exe if you want.
 Chrome login is stored in %LOCALAPPDATA%\BandCamp-Uploader\ (not in the app folder),
 so you can delete the unpacked folder anytime (any drive).

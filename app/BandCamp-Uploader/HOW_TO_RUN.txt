@@ -1,4 +1,4 @@
-﻿BandCamp Uploader (EXE)
+BandCamp Uploader (EXE)
 =======================
 
 Latest always (GitHub):
@@ -8,7 +8,7 @@ Latest always (GitHub):
 
 1. Double-click BandCamp-Uploader.exe
 2. Log into Bandcamp in the Chrome window that opens (once)
-3. Paste an album folder path, Enter â€” repeat for more albums
+3. Paste an album folder path, Enter — repeat for more albums
 4. Review drafts in Chrome; publish yourself
 
 Needs: Google Chrome installed.
