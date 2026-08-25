@@ -26,6 +26,8 @@ $env:PYTHONDONTWRITEBYTECODE = "1"
 
 $appPy = Join-Path $PSScriptRoot "bandcamp_app.py"
 $prices = Join-Path $root "prices.txt"
+$disclaimer = Join-Path $root "disclaimer.txt"
+if (-not (Test-Path $disclaimer)) { throw "Missing disclaimer.txt" }
 $outRoot = Join-Path $PSScriptRoot "_build_out"
 $distName = "BandCamp-Uploader"
 $final = Join-Path $PSScriptRoot $distName
@@ -66,6 +68,7 @@ $outExe = Join-Path $built "BandCamp-Uploader.exe"
 if (-not (Test-Path $outExe)) { throw "Missing $outExe" }
 
 Copy-Item $prices (Join-Path $built "prices.txt") -Force
+Copy-Item $disclaimer (Join-Path $built "disclaimer.txt") -Force
 @"
 BandCamp Uploader (EXE)
 =======================
@@ -92,6 +95,7 @@ New-Item -ItemType Directory -Force -Path $final | Out-Null
 Copy-Item (Join-Path $built "BandCamp-Uploader.exe") (Join-Path $final "BandCamp-Uploader.exe") -Force
 Copy-Item (Join-Path $built "prices.txt") (Join-Path $final "prices.txt") -Force
 Copy-Item (Join-Path $built "HOW_TO_RUN.txt") (Join-Path $final "HOW_TO_RUN.txt") -Force
+Copy-Item (Join-Path $built "disclaimer.txt") (Join-Path $final "disclaimer.txt") -Force
 
 # Authenticode sign as CN=ezixen (FileDescription already embeds GitHub URL via version_info.txt)
 . (Join-Path $PSScriptRoot "sign_exe.ps1")
