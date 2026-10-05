@@ -21,6 +21,11 @@ _ROOT = _HERE.parent if (_HERE.parent / "bandcamp_upload_album.py").is_file() el
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+from app_banner import (  # noqa: E402
+    confirm_quit,
+    print_startup_banner,
+    read_display_version,
+)
 from bandcamp_upload_album import (  # noqa: E402
     album_title_from_folder,
     app_dir,
@@ -144,11 +149,15 @@ def main() -> int:
     register_chrome_cleanup_on_exit(*roots)
     # Clear any leftover local-secrets from older EXE builds (any drive the EXE sits on)
     scrub_app_folder_side_effects(app_dir())
-    print("=== BandCamp Uploader (EXE / console) ===", flush=True)
-    print("Drafts only — you publish in Bandcamp yourself.", flush=True)
-    print(f"App folder: {app_dir()}", flush=True)
-    print(f"Chrome profile (login kept): {chrome_profile_dir()}", flush=True)
-    print("(Profile is always under LocalAppData — never beside this EXE.)", flush=True)
+    version = read_display_version(app_dir(), _ROOT, _HERE)
+    print_startup_banner(
+        "BandCamp Uploader",
+        version,
+        "Drafts only — you publish in Bandcamp yourself.",
+        f"App folder: {app_dir()}",
+        f"Chrome profile (login kept): {chrome_profile_dir()}",
+        "(Profile is always under LocalAppData — never beside this EXE.)",
+    )
     ensure_prices_file()
     find_chrome()
     ensure_debug_chrome()
@@ -160,6 +169,9 @@ def main() -> int:
     while True:
         folder = read_path()
         if folder is None:
+            if not confirm_quit():
+                print("Continuing — finish uploads / review, then quit when ready.", flush=True)
+                continue
             break
         if folder.name == "__retry__":
             continue
