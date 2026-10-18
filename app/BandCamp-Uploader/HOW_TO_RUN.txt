@@ -1,10 +1,13 @@
 BandCamp Uploader (EXE)
 =======================
 
-Latest always (GitHub):
+Latest always (GitHub — please download only from here):
   https://github.com/ezixen/BandCamp-uploader
   https://github.com/ezixen/BandCamp-uploader/releases/latest
   EXE pack: https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip
+
+Please get this app only from the official GitHub release above —
+copies from elsewhere may be outdated or altered. Thank you!
 
 1. Double-click BandCamp-Uploader.exe
 2. Log into Bandcamp in the Chrome window that opens (once)
@@ -14,4 +17,4 @@ Latest always (GitHub):
 Needs: Google Chrome installed.
 Edits: prices.txt in this folder (album= / track=)
 Chrome login: %LOCALAPPDATA%\BandCamp-Uploader\ (kept between runs; never beside this EXE)
-On quit: debug Chrome stops; caches/temp cleared; this folder stays deletable
+On quit: confirm first — debug Chrome stops; caches/temp cleared; this folder stays deletable
