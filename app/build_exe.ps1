@@ -58,8 +58,6 @@ if (-not (Test-Path $jpgFile)) { throw "Missing uploader.jpg" }
   --version-file $versionFile `
   --icon $iconFile `
   --add-data "$prices;." `
-  --add-data "$iconFile;." `
-  --add-data "$jpgFile;." `
   --hidden-import websocket `
   --hidden-import chrome_debug `
   --hidden-import cdp_owned_tab `
@@ -67,9 +65,7 @@ if (-not (Test-Path $jpgFile)) { throw "Missing uploader.jpg" }
   --hidden-import console_host `
   --hidden-import terminal_logo `
   --hidden-import terminal_logo_data `
-  --hidden-import PIL `
-  --hidden-import PIL.Image `
-  --hidden-import PIL.JpegImagePlugin `
+  --hidden-import jpeg_win `
   $appPy
 
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed: $LASTEXITCODE" }
