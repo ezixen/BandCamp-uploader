@@ -7,6 +7,8 @@
 **GitHub (latest always):** https://github.com/ezixen/BandCamp-uploader  
 **[Latest release](https://github.com/ezixen/BandCamp-uploader/releases/latest)** · **[ZIP (scripts + EXE)](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-uploader.zip)** · **[EXE only](https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip)**  
 
+Please download only from the official GitHub release above — thank you!
+
 Unpack either ZIP → you get a **`BandCamp-uploader/`** folder (no need to create one).
 
 ---

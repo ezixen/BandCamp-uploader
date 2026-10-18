@@ -38,12 +38,14 @@ foreach ($p in @($outRoot, $work, $spec)) {
   if (Test-Path $p) { Remove-Item $p -Recurse -Force }
 }
 
-$addData = "$prices;."
 $versionFile = Join-Path $PSScriptRoot "version_info.txt"
 if (-not (Test-Path $versionFile)) { throw "Missing version_info.txt" }
 $iconFile = Join-Path $PSScriptRoot "uploader.ico"
 if (-not (Test-Path $iconFile)) { $iconFile = Join-Path $root "images\uploader-logo.ico" }
 if (-not (Test-Path $iconFile)) { throw "Missing uploader.ico / images\uploader-logo.ico" }
+$jpgFile = Join-Path $PSScriptRoot "uploader.jpg"
+if (-not (Test-Path $jpgFile)) { $jpgFile = Join-Path $root "uploader.jpg" }
+if (-not (Test-Path $jpgFile)) { throw "Missing uploader.jpg" }
 & $py -m PyInstaller `
   --noconfirm `
   --clean `
@@ -55,11 +57,15 @@ if (-not (Test-Path $iconFile)) { throw "Missing uploader.ico / images\uploader-
   --specpath $spec `
   --version-file $versionFile `
   --icon $iconFile `
-  --add-data $addData `
+  --add-data "$prices;." `
+  --add-data "$iconFile;." `
+  --add-data "$jpgFile;." `
   --hidden-import websocket `
   --hidden-import chrome_debug `
   --hidden-import cdp_owned_tab `
   --hidden-import app_banner `
+  --hidden-import terminal_logo `
+  --hidden-import terminal_logo_data `
   $appPy
 
 if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed: $LASTEXITCODE" }
@@ -70,14 +76,19 @@ if (-not (Test-Path $outExe)) { throw "Missing $outExe" }
 
 Copy-Item $prices (Join-Path $built "prices.txt") -Force
 Copy-Item $disclaimer (Join-Path $built "disclaimer.txt") -Force
+Copy-Item $iconFile (Join-Path $built "uploader.ico") -Force
+Copy-Item $jpgFile (Join-Path $built "uploader.jpg") -Force
 @"
 BandCamp Uploader (EXE)
 =======================
 
-Latest always (GitHub):
+Latest always (GitHub — please download only from here):
   https://github.com/ezixen/BandCamp-uploader
   https://github.com/ezixen/BandCamp-uploader/releases/latest
   EXE pack: https://github.com/ezixen/BandCamp-uploader/releases/latest/download/BandCamp-Uploader-exe.zip
+
+Please get this app only from the official GitHub release above —
+copies from elsewhere may be outdated or altered. Thank you!
 
 1. Double-click BandCamp-Uploader.exe
 2. Log into Bandcamp in the Chrome window that opens (once)
@@ -87,7 +98,7 @@ Latest always (GitHub):
 Needs: Google Chrome installed.
 Edits: prices.txt in this folder (album= / track=)
 Chrome login: %LOCALAPPDATA%\BandCamp-Uploader\ (kept between runs; never beside this EXE)
-On quit: debug Chrome stops; caches/temp cleared; this folder stays deletable
+On quit: confirm first — debug Chrome stops; caches/temp cleared; this folder stays deletable
 "@ | Set-Content (Join-Path $built "HOW_TO_RUN.txt") -Encoding UTF8
 
 # Publish into app\BandCamp-Uploader (never copy local-secrets — profile is under LocalAppData)
@@ -97,6 +108,8 @@ Copy-Item (Join-Path $built "BandCamp-Uploader.exe") (Join-Path $final "BandCamp
 Copy-Item (Join-Path $built "prices.txt") (Join-Path $final "prices.txt") -Force
 Copy-Item (Join-Path $built "HOW_TO_RUN.txt") (Join-Path $final "HOW_TO_RUN.txt") -Force
 Copy-Item (Join-Path $built "disclaimer.txt") (Join-Path $final "disclaimer.txt") -Force
+Copy-Item $iconFile (Join-Path $final "uploader.ico") -Force
+Copy-Item $jpgFile (Join-Path $final "uploader.jpg") -Force
 
 # Authenticode sign as CN=ezixen (FileDescription already embeds GitHub URL via version_info.txt)
 . (Join-Path $PSScriptRoot "sign_exe.ps1")
